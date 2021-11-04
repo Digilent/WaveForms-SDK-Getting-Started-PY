@@ -41,7 +41,7 @@ tr_reset.high_pin = ctypes.c_int(0) if tr_reset.high_pin == None else ctypes.c_i
 tr_reset.rising_pin = ctypes.c_int(0) if tr_reset.rising_pin == None else ctypes.c_int(1 << tr_reset.rising_pin)
 tr_reset.falling_pin = ctypes.c_int(0) if tr_reset.falling_pin == None else ctypes.c_int(1 << tr_reset.falling_pin)
 # set things up
-dwf.FDwfDigitalInTriggerResetSet(hdwf, low_pin, high_pin, rising_pin, falling_pin)
+dwf.FDwfDigitalInTriggerResetSet(hdwf, tr_reset.low_pin, tr_reset.high_pin, tr_reset.rising_pin, tr_reset.falling_pin)
  
 # set auto triggering
 dwf.FDwfDigitalInTriggerAutoTimeoutSet(hdwf, ctypes.c_double(trigger_timeout))
