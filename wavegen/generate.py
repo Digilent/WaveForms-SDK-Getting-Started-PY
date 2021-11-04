@@ -14,7 +14,7 @@ repeat = 0                            # repeat count, 0 means infinite
 
 # enable channel
 channel = ctypes.c_int(channel - 1)
-dwf.FDwfAnalogOutNodeEnableSet(hdwf, channel, constants.AnalogOutNodeCarrier, ctypes._bool(True))
+dwf.FDwfAnalogOutNodeEnableSet(hdwf, channel, constants.AnalogOutNodeCarrier, ctypes.c_bool(True))
  
 # set function type
 dwf.FDwfAnalogOutNodeFunctionSet(hdwf, channel, constants.AnalogOutNodeCarrier, function_type)
