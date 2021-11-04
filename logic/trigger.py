@@ -31,19 +31,43 @@ dwf.FDwfDigitalInTriggerPrefillSet(hdwf, trigger_position)
  
 # trigger set condition
 # create bitmasks
-tr_set.low_pin = ctypes.c_int(0) if tr_set.low_pin == None else ctypes.c_int(1 << tr_set.low_pin)
-tr_set.high_pin = ctypes.c_int(0) if tr_set.high_pin == None else ctypes.c_int(1 << tr_set.high_pin)
-tr_set.rising_pin = ctypes.c_int(0) if tr_set.rising_pin == None else ctypes.c_int(1 << tr_set.rising_pin)
-tr_set.falling_pin = ctypes.c_int(0) if tr_set.falling_pin == None else ctypes.c_int(1 << tr_set.falling_pin)
+if tr_set.low_pin == None:
+    tr_set.low_pin = ctypes.c_int(0) 
+else:
+    tr_set.low_pin = ctypes.c_int(1 << tr_set.low_pin)
+if tr_set.high_pin == None:
+    tr_set.high_pin = ctypes.c_int(0) 
+else:
+    tr_set.high_pin = ctypes.c_int(1 << tr_set.high_pin)
+if tr_set.rising_pin == None:
+    tr_set.rising_pin = ctypes.c_int(0) 
+else:
+    tr_set.rising_pin = ctypes.c_int(1 << tr_set.rising_pin)
+if tr_set.falling_pin == None:
+    tr_set.falling_pin = ctypes.c_int(0) 
+else:
+    tr_set.falling_pin = ctypes.c_int(1 << tr_set.falling_pin)
 # set things up
 dwf.FDwfDigitalInTriggerSet(hdwf, tr_set.low_pin, tr_set.high_pin, tr_set.rising_pin, tr_set.falling_pin)
  
 # trigger reset condition
 # create bitmasks
-tr_reset.low_pin = ctypes.c_int(0) if tr_reset.low_pin == None else ctypes.c_int(1 << tr_reset.low_pin)
-tr_reset.high_pin = ctypes.c_int(0) if tr_reset.high_pin == None else ctypes.c_int(1 << tr_reset.high_pin)
-tr_reset.rising_pin = ctypes.c_int(0) if tr_reset.rising_pin == None else ctypes.c_int(1 << tr_reset.rising_pin)
-tr_reset.falling_pin = ctypes.c_int(0) if tr_reset.falling_pin == None else ctypes.c_int(1 << tr_reset.falling_pin)
+if tr_reset.low_pin == None:
+    tr_reset.low_pin = ctypes.c_int(0) 
+else:
+    tr_reset.low_pin = ctypes.c_int(1 << tr_reset.low_pin)
+if tr_reset.high_pin == None:
+    tr_reset.high_pin = ctypes.c_int(0) 
+else:
+    tr_reset.high_pin = ctypes.c_int(1 << tr_reset.high_pin)
+if tr_reset.rising_pin == None:
+    tr_reset.rising_pin = ctypes.c_int(0) 
+else:
+    tr_reset.rising_pin = ctypes.c_int(1 << tr_reset.rising_pin)
+if tr_reset.falling_pin == None:
+    tr_reset.falling_pin = ctypes.c_int(0) 
+else:
+    tr_reset.falling_pin = ctypes.c_int(1 << tr_reset.falling_pin)
 # set things up
 dwf.FDwfDigitalInTriggerResetSet(hdwf, tr_reset.low_pin, tr_reset.high_pin, tr_reset.rising_pin, tr_reset.falling_pin)
  
