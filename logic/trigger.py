@@ -24,11 +24,11 @@ dwf.FDwfDigitalInTriggerPrefillSet(hdwf, ctypes.c_int(trigger_position))
 # set trigger condition
 trigger_pin = ctypes.c_int(1 << trigger_pin)
 if trigger_edge_rising:
-    dwf.FDwfDigitalInTriggerSet(hdwf, ctypes.c_int(0), trigger_pin, ctypes.c_int(0), ctypes.c_int(0))
-    dwf.FDwfDigitalInTriggerResetSet(hdwf, ctypes.c_int(0), ctypes.c_int(0), trigger_pin, ctypes.c_int(0))
-else:
     dwf.FDwfDigitalInTriggerSet(hdwf, trigger_pin, ctypes.c_int(0), ctypes.c_int(0), ctypes.c_int(0))
     dwf.FDwfDigitalInTriggerResetSet(hdwf, ctypes.c_int(0), ctypes.c_int(0), ctypes.c_int(0), trigger_pin)
+else:
+    dwf.FDwfDigitalInTriggerSet(hdwf, ctypes.c_int(0), trigger_pin, ctypes.c_int(0), ctypes.c_int(0))
+    dwf.FDwfDigitalInTriggerResetSet(hdwf, ctypes.c_int(0), ctypes.c_int(0), trigger_pin, ctypes.c_int(0))
  
 # set auto triggering
 dwf.FDwfDigitalInTriggerAutoTimeoutSet(hdwf, ctypes.c_double(trigger_timeout))
