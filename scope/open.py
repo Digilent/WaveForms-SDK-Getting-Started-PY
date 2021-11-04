@@ -18,7 +18,7 @@ dwf.FDwfAnalogInChannelRangeSet(hdwf, ctypes.c_int(0), ctypes.c_double(amplitude
 dwf.FDwfAnalogInBufferSizeSet(hdwf, ctypes.c_int(buffer_size))
  
 # set the acquisition frequency (in Hz)
-dwf.FDwfAnalogInFrequencySet(hdwf, c_double(sampling_frequency))
+dwf.FDwfAnalogInFrequencySet(hdwf, ctypes.c_double(sampling_frequency))
  
 # disable averaging (for more info check the documentation)
 dwf.FDwfAnalogInChannelFilterSet(hdwf, ctypes.c_int(-1), constants.filterDecimate)
