@@ -1,5 +1,6 @@
 # user defined variables
 buffer_size = 4096            # data points in a recording
+trigger_enable = False        # enable/disable the trigger
 trigger_position = 0          # how many bits should be read before the trigger event
 trigger_timeout = 2           # in seconds
 class tr_set:             # trigger set conditions
@@ -17,8 +18,11 @@ class tr_len:             # trigger sequence length constraints
     length_max = 20           # trigger only on sequences shorter than 20s (between 0s-20s)
 
 
-# set trigger source to digital I/O lines
-dwf.FDwfDigitalInTriggerSourceSet(hdwf, constants.trigsrcDetectorDigitalIn)
+# set trigger source to digital I/O lines, or turn it off
+if trigger_enable:
+    dwf.FDwfDigitalInTriggerSourceSet(hdwf, constants.trigsrcDetectorDigitalIn)
+else:
+    dwf.FDwfDigitalInTriggerSourceSet(hdwf, constants.trigsrcNone)
  
 # set starting position and prefill
 trigger_position = ctypes.c_int(min(buffer_size - 1, max(0, trigger_position)))
