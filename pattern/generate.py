@@ -5,7 +5,7 @@ function = constants.DwfDigitalOutTypePulse           # possible: DwfDigitalOutT
 wait_time = 0                                         # in seconds
 repeat = 0                                            # repeat count, 0 means infinite
 trigger_enabled = False                               # enable/disable trigger in repeat cycle
-trigger_source = constants.trigsrcDetectorDigitalIn   # possible: trigsrcDetectorDigitalIn, trigsrcNone, trigsrcDetectorAnalogIn,
+trigger_source = constants.trigsrcNone                # possible: trigsrcDetectorDigitalIn, trigsrcNone, trigsrcDetectorAnalogIn,
                                                                 # trigsrcExternal1, trigsrcExternal2, trigsrcExternal3, trigsrcExternal4
 trigger_edge = constants.DwfTriggerSlopeRise          # possible: DwfTriggerSlopeRise, DwfTriggerSlopeFall, DwfTriggerSlopeEither
 duty_cycle = 50                                       # duty cycle of the signal in percentage, used only if function = constants.DwfDigitalOutTypePulse
@@ -42,7 +42,8 @@ dwf.FDwfDigitalOutRepeatSet(hdwf, ctypes.c_int(repeat))
 dwf.FDwfDigitalOutRepeatTriggerSet(hdwf, ctypes.c_int(trigger_enabled))
  
 # set trigger source
-dwf.FDwfDigitalOutTriggerSourceSet(hdwf, trigger_source)
+if not trigger_enabled:
+    dwf.FDwfDigitalOutTriggerSourceSet(hdwf, trigger_source)
  
 # set trigger slope
 dwf.FDwfDigitalOutTriggerSlopeSet(hdwf, trigger_edge)
