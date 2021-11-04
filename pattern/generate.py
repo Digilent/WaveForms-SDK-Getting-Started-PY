@@ -55,7 +55,7 @@ if function == constants.DwfDigitalOutTypePulse:
     # calculate steps for low and high parts of the period
     high_steps = int(steps * duty_cycle / 100)
     low_steps = int(steps - high_steps)
-    dwf.FDwfDigitalOutCounterSet(hdwf, ctypes.c_int(channel), cypes.c_int(low_steps), ctypes.c_int(high_steps))
+    dwf.FDwfDigitalOutCounterSet(hdwf, ctypes.c_int(channel), ctypes.c_int(low_steps), ctypes.c_int(high_steps))
  
 # load custom signal data
 elif function == constants.DwfDigitalOutTypeCustom:
