@@ -1,28 +1,35 @@
-# user defined variables
-trigger_timeout = 0                                  # auto trigger timeout - 0 disables autotriggering
-trigger_source = constants.trigsrcDetectorAnalogIn   # possible: trigsrcNone, trigsrcDetectorAnalogIn, trigsrcDetectorDigitalIn, 
-                                                               # trigsrcExternal1, trigsrcExternal2, trigsrcExternal3, trigsrcExternal4
-trigger_channel = 0                                  # scope channel 1, possible options: 0-3 for trigsrcDetectorAnalogIn,
-                                                               # or 0-15 for trigsrcDetectorDigitalIn
-trigger_type = constants.trigtypeTransition          # possible: trigtypeEdge, trigtypePulse, trigtypeTransition
-trigger_level = 0                                    # trigger level in Volts
-trigger_edge = constants.trigcondRisingPositive      # possible: trigcondRisingPositive, rigcondFallingNegative
+def trigger(device_handle, enable, source=constants.trigsrcNone, channel=0, timeout=0, type=constants.trigtypeTransition, edge=constants.trigcondRisingPositive, level=0):
+    """
+        set up triggering
 
+        parameters: - device handle
+                    - enable / disable triggering with True/False
+                    - trigger source - possible: trigsrcNone, trigsrcDetectorAnalogIn, trigsrcDetectorDigitalIn, trigsrcExternal1, trigsrcExternal2, trigsrcExternal3, trigsrcExternal4
+                    - trigger channel - possible options: 0-3 for trigsrcDetectorAnalogIn, or 0-15 for trigsrcDetectorDigitalIn
+                    - auto trigger timeout in seconds, default is 0
+                    - event type - possible: trigtypeEdge, trigtypePulse, trigtypeTransition, default is transition
+                    - trigger edge - possible: trigcondRisingPositive, rigcondFallingNegative, default is rising
+                    - trigger level in Volts, default is 0V
+    """
+    if enable and source != constants.trigsrcNone:
+        # enable/disable auto triggering
+        dwf.FDwfAnalogInTriggerAutoTimeoutSet(device_handle, ctypes.c_double(timeout))
 
-# enable/disable auto triggering
-dwf.FDwfAnalogInTriggerAutoTimeoutSet(hdwf, ctypes.c_double(trigger_timeout))
- 
-# set trigger source
-dwf.FDwfAnalogInTriggerSourceSet(hdwf, trigger_source)
- 
-# set trigger channel
-dwf.FDwfAnalogInTriggerChannelSet(hdwf, ctypes.c_int(trigger_channel))
- 
-# set trigger type
-dwf.FDwfAnalogInTriggerTypeSet(hdwf, trigger_type)
- 
-# set trigger level
-dwf.FDwfAnalogInTriggerLevelSet(hdwf, ctypes.c_double(trigger_level))
- 
-# set trigger edge
-dwf.FDwfAnalogInTriggerConditionSet(hdwf, trigger_edge)
+        # set trigger source
+        dwf.FDwfAnalogInTriggerSourceSet(device_handle, source)
+
+        # set trigger channel
+        dwf.FDwfAnalogInTriggerChannelSet(device_handle, ctypes.c_int(channel))
+
+        # set trigger type
+        dwf.FDwfAnalogInTriggerTypeSet(device_handle, type)
+
+        # set trigger level
+        dwf.FDwfAnalogInTriggerLevelSet(device_handle, ctypes.c_double(level))
+
+        # set trigger edge
+        dwf.FDwfAnalogInTriggerConditionSet(device_handle, edge)
+    else:
+        # turn off the trigger
+        dwf.FDwfAnalogInTriggerSourceSet(device_handle, constants.trigsrcNone)
+    return
