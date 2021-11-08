@@ -1,3 +1,5 @@
+""" POWER SUPPLIES CONTROL FUNCTIONS: switch_fixed, switch_variable, switch_digital, close """
+
 import ctypes                     # import the C compatible data types
 import dwfconstants as constants  # import every constant
 from sys import platform          # this is needed to check the OS type

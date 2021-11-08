@@ -1,3 +1,5 @@
+""" DEVICE CONTROL FUNCTIONS: open, check_error, close """
+
 import ctypes                     # import the C compatible data types
 import dwfconstants as constants  # import every constant
 from sys import platform          # this is needed to check the OS type
