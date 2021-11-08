@@ -1,6 +1,7 @@
 """ IMPORT ISNTRUMENT FUNCTIONS """
 
-import device   # device control functions
+import dwfconstants as constants  # import every constant
+import device                     # device control functions
 
 """-----------------------------------------------------------------------"""
 
