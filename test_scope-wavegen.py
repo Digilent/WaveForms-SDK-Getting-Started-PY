@@ -1,9 +1,9 @@
 """ IMPORT ISNTRUMENT FUNCTIONS """
 
-import dwfconstants as constants  # import every constant
-import device                     # device control functions
-import scope                      # oscilloscope control functions
-import wavegen                    # waveform generator control functions
+import WF_SDK.dwfconstants as constants  # import every constant
+import WF_SDK.device as device           # device control functions
+import WF_SDK.scope as scope             # oscilloscope control functions
+import WF_SDK.wavegen as wavegen         # waveform generator control functions
 
 import matplotlib.pyplot as plt   # needed for plotting
 

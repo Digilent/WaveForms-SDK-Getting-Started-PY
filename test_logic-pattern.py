@@ -1,9 +1,9 @@
 """ IMPORT ISNTRUMENT FUNCTIONS """
 
-import dwfconstants as constants  # import every constant
-import device                     # device control functions
-import logic                      # logic analyzer control functions
-import pattern                    # pattern generator control functions
+import WF_SDK.dwfconstants as constants  # import every constant
+import WF_SDK.device as device           # device control functions
+import WF_SDK.logic as logic             # logic analyzer control functions
+import WF_SDK.pattern as pattern         # pattern generator control functions
 
 import matplotlib.pyplot as plt   # needed for plotting
 
