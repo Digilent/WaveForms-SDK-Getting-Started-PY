@@ -1,9 +1,6 @@
 """ IMPORT ISNTRUMENT FUNCTIONS """
 
-import WF_SDK.dwfconstants as constants  # import every constant
-import WF_SDK.device as device           # device control functions
-import WF_SDK.scope as scope             # oscilloscope control functions
-import WF_SDK.wavegen as wavegen         # waveform generator control functions
+from WF_SDK import device, scope, wavegen   # device control functions
 
 import matplotlib.pyplot as plt   # needed for plotting
 
@@ -21,10 +18,10 @@ device.check_error(device_handle)
 scope.open(device_handle)
 
 # set up triggering on scope channel 1
-scope.trigger(device_handle, enable=True, source=constants.trigsrcDetectorAnalogIn, channel=0, level=0)
+scope.trigger(device_handle, enable=True, source=scope.trigger_source.analog, channel=1, level=0)
 
 # generate a 10KHz sine signal with 2V amplitude on channel 1
-wavegen.generate(device_handle, channel=1, function=constants.funcSine, offset=0, frequency=10e03, amplitude=2)
+wavegen.generate(device_handle, channel=1, function=wavegen.function.sine, offset=0, frequency=10e03, amplitude=2)
 
 # record data with the scopeon channel 1
 buffer, time = scope.record(device_handle, channel=1)

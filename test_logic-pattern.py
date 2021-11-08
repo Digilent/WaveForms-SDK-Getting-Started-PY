@@ -1,9 +1,6 @@
 """ IMPORT ISNTRUMENT FUNCTIONS """
 
-import WF_SDK.dwfconstants as constants  # import every constant
-import WF_SDK.device as device           # device control functions
-import WF_SDK.logic as logic             # logic analyzer control functions
-import WF_SDK.pattern as pattern         # pattern generator control functions
+from WF_SDK import device, logic, pattern   # device control functions
 
 import matplotlib.pyplot as plt   # needed for plotting
 
@@ -24,7 +21,7 @@ logic.open(device_handle)
 logic.trigger(device_handle, enable=True, channel=0, rising_edge=False)
 
 # generate a 100KHz PWM signal with 30% duty cycle on DIO0
-pattern.generate(device_handle, channel=0, function=constants.DwfDigitalOutTypePulse, frequency=100e03, duty_cycle=30)
+pattern.generate(device_handle, channel=0, function=pattern.function.pulse, frequency=100e03, duty_cycle=30)
 
 # record a logic signal on DIO0
 buffer, time = logic.record(device_handle, channel=0)

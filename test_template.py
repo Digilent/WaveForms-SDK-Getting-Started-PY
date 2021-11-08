@@ -1,7 +1,6 @@
 """ IMPORT ISNTRUMENT FUNCTIONS """
 
-import WF_SDK.dwfconstants as constants  # import every constant
-import WF_SDK.device as device           # device control functions
+from WF_SDK import device       # device control functions
 
 """-----------------------------------------------------------------------"""
 
