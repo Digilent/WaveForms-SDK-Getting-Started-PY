@@ -17,13 +17,29 @@ else:
 
 """-----------------------------------------------------------------------"""
 
+class function:
+    """ function names """
+    custom = constants.funcCustom
+    sine = constants.funcSine
+    square = constants.funcSquare
+    triangle = constants.funcTriangle
+    noise = constants.funcNoise
+    dc = constants.funcDC
+    pulse = constants.funcPulse
+    trapezium = constants.funcTrapezium
+    sine_power = constants.funcSinePower
+    ramp_up = constants.funcRampUp
+    ramp_down = constants.funcRampDown
+
+"""-----------------------------------------------------------------------"""
+
 def generate(device_handle, channel, function, offset, frequency=1e03, amplitude=1, symmetry=50, wait=0, run_time=0, repeat=0, data=[]):
     """
         generate an analog signal
 
         parameters: - device handle
                     - the selected wavegen channel (1-2)
-                    - function - possible: funcCustom, funcSine, funcSquare, funcTriangle, funcNoise, funcDC, funcPulse, funcTrapezium, funcSinePower, funcRampUp, funcRampDown
+                    - function - possible: custom, sine, square, triangle, noise, ds, pulse, trapezium, sine_power, ramp_up, ramp_down
                     - offset voltage in Volts
                     - frequency in Hz, default is 1KHz
                     - amplitude in Volts, default is 1V
@@ -31,7 +47,7 @@ def generate(device_handle, channel, function, offset, frequency=1e03, amplitude
                     - wait time in seconds, default is 0s
                     - run time in seconds, default is infinite (0)
                     - repeat count, default is infinite (0)
-                    - data - list of voltages, used only if function=constants.funcCustom, default is empty
+                    - data - list of voltages, used only if function=custom, default is empty
     """
     # enable channel
     channel = ctypes.c_int(channel - 1)
