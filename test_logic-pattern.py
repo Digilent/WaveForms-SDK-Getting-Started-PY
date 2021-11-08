@@ -1,18 +1,16 @@
-""" IMPORT ISNTRUMENT FUNCTIONS """
-
-from WF_SDK import device, logic, pattern   # device control functions
+from WF_SDK import device, logic, pattern   # import instruments
 
 import matplotlib.pyplot as plt   # needed for plotting
 
 """-----------------------------------------------------------------------"""
-
-""" MAIN PROGRAM """
 
 # connect to the device
 device_handle = device.open()
 
 # check for connection errors
 device.check_error(device_handle)
+
+"""-----------------------------------"""
 
 # initialize the logic analyzer with default settings
 logic.open(device_handle)
@@ -39,6 +37,8 @@ logic.close(device_handle)
 
 # reset the pattern generator
 pattern.close(device_handle)
+
+"""-----------------------------------"""
 
 # close the connection
 device.close(device_handle)

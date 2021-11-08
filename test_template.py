@@ -1,10 +1,6 @@
-""" IMPORT ISNTRUMENT FUNCTIONS """
-
-from WF_SDK import device       # device control functions
+from WF_SDK import device       # import instruments
 
 """-----------------------------------------------------------------------"""
-
-""" MAIN PROGRAM """
 
 # connect to the device
 device_handle = device.open()
@@ -12,7 +8,12 @@ device_handle = device.open()
 # check for connection errors
 device.check_error(device_handle)
 
+"""-----------------------------------"""
+
 # use instruments here
+
+
+"""-----------------------------------"""
 
 # close the connection
 device.close(device_handle)

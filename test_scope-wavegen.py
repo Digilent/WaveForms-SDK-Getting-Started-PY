@@ -1,18 +1,16 @@
-""" IMPORT ISNTRUMENT FUNCTIONS """
-
-from WF_SDK import device, scope, wavegen   # device control functions
+from WF_SDK import device, scope, wavegen   # import instruments
 
 import matplotlib.pyplot as plt   # needed for plotting
 
 """-----------------------------------------------------------------------"""
-
-""" MAIN PROGRAM """
 
 # connect to the device
 device_handle = device.open()
 
 # check for connection errors
 device.check_error(device_handle)
+
+"""-----------------------------------"""
 
 # initialize the scope with default settings
 scope.open(device_handle)
@@ -38,6 +36,8 @@ scope.close(device_handle)
 
 # reset the wavegen
 wavegen.close(device_handle)
+
+"""-----------------------------------"""
 
 # close the connection
 device.close(device_handle)
