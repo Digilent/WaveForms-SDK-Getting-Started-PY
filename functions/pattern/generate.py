@@ -1,17 +1,17 @@
-def generate(device_handle, channel, function, frequency, duty_cycle=50, data=[], wait=0, repeat=0, trigger_enabled=False, trigger_source=constants.trigsrcNone, trigger_edge=constants.DwfTriggerSlopeRise):
+def generate(device_handle, channel, function, frequency, duty_cycle=50, data=[], wait=0, repeat=0, trigger_enabled=False, trigger_source=trigger_source.none, trigger_edge_rising=True):
     """
         generate a logic signal
         
         parameters: - channel - the selected DIO line number
-                    - function - possible: DwfDigitalOutTypePulse, DwfDigitalOutTypeCustom, DwfDigitalOutTypeRandom
+                    - function - possible: pulse, custom, random
                     - frequency in Hz
-                    - duty cycle in percentage, used only if function = constants.DwfDigitalOutTypePulse, default is 50%
-                    - data list, used only if function = constants.DwfDigitalOutTypeCustom, default is empty
+                    - duty cycle in percentage, used only if function = pulse, default is 50%
+                    - data list, used only if function = custom, default is empty
                     - wait time in seconds, default is 0 seconds
                     - repeat count, default is infinite (0)
                     - trigger_enabled - include/exclude trigger from repeat cycle
-                    - trigger_source - possible: trigsrcDetectorDigitalIn, trigsrcNone, trigsrcDetectorAnalogIn, trigsrcExternal1, trigsrcExternal2, trigsrcExternal3, trigsrcExternal4
-                    - trigger_edge - possible: DwfTriggerSlopeRise, DwfTriggerSlopeFall, DwfTriggerSlopeEither
+                    - trigger_source - possible: none, analog, digital, external[1-4]
+                    - trigger_edge_rising - True means rising, False means falling, None means either, default is rising
     """
     # get internal clock frequency
     internal_frequency = ctypes.c_double()
@@ -47,8 +47,16 @@ def generate(device_handle, channel, function, frequency, duty_cycle=50, data=[]
         dwf.FDwfDigitalOutTriggerSourceSet(device_handle, trigger_source)
     
         # set trigger slope
-        dwf.FDwfDigitalOutTriggerSlopeSet(device_handle, trigger_edge)
-    
+        if trigger_edge_rising == True:
+            # rising edge
+            dwf.FDwfDigitalOutTriggerSlopeSet(device_handle, constants.DwfTriggerSlopeRise)
+        elif trigger_edge_rising == False:
+            # falling edge
+            dwf.FDwfDigitalOutTriggerSlopeSet(device_handle, constants.DwfTriggerSlopeFall)
+        elif trigger_edge_rising == None:
+            # either edge
+            dwf.FDwfDigitalOutTriggerSlopeSet(device_handle, constants.DwfTriggerSlopeEither)
+
     # set PWM signal duty cycle
     if function == constants.DwfDigitalOutTypePulse:
         # calculate counter steps to get the required frequency
