@@ -3,51 +3,53 @@ def open(device=None):
         open a specific device
 
         parameters: - device type: None (first device), "Analog Discovery", "Analog Discovery 2", "Analog Discovery Studio", "Digital Discovery" and "Analog Discovery Pro 3X50"
+    
+        returns:    - the device handle
+                    - the device name
     """
-    # check required device
-    if device != None:
-        # get connected devices list
-        device_count = ctypes.c_int()
-        dwf.FDwfEnum(ctypes.c_int(0), ctypes.byref(device_count))
+    device_names = [("Analog Discovery", constants.devidDiscovery), ("Analog Discovery 2", constants.devidDiscovery2),
+                    ("Analog Discovery Studio", constants.devidDiscovery2), ("Digital Discovery", constants.devidDDiscovery),
+                    ("Analog Discovery Pro 3X50", constants.devidADP3X50)]
+    
+    # decode device names
+    device_type = constants.enumfilterAll
+    for pair in device_names:
+        if pair[0] == device:
+            device_type = pair[1]
+            break
 
-        # decode required device type
-        if device == "Analog Discovery":
-            device_type = constants.devidDiscovery
-        elif device == "Analog Discovery 2" or device == "Analog Discovery Studio":
-            device_type = constants.devidDiscovery2
-        elif device == "Digital Discovery":
-            device_type = constants.devidDDiscovery
-        elif device == "Analog Discovery Pro 3x50":
-            device_type = constants.devidADP3X50
+    # count devices
+    device_count = ctypes.c_int()
+    dwf.FDwfEnum(device_type, ctypes.byref(device_count))
+
+    # check for connected devices
+    if device_count.value <= 0:
+        if device_type.value == 0:
+            print("Error: There are no connected devices")
         else:
-            print("Error: No such device")
-            quit()
-
-        # go through the list of devices
-        index = -1
-        for device_index in range(0, device_count.value):
-            # get device type
-            device_id = ctypes.c_int()
-            device_rev = ctypes.c_int()
-            dwf.FDwfEnumDeviceType(ctypes.c_int(device_index), ctypes.byref(device_id), ctypes.byref(device_rev))
-
-            # save index on match
-            if device_id.value == device_type.value:
-                index = device_index
-                break
-
-        # check for mathces
-        if index == -1:
-            print("Error: No " + device + " is connected")
-            quit()
-        
-    else:
-        # connect to the first device
-        index = -1
+            print("Error: There is no " + device + " connected")
+        quit()
 
     # this is the device handle - it will be used by all functions to "address" the connected device
-    device_handle = ctypes.c_int()
+    device_handle = ctypes.c_int(0)
 
     # connect to the first available device
-    dwf.FDwfDeviceOpen(ctypes.c_int(index), ctypes.byref(device_handle))
-    return device_handle
+    index = 0
+    while device_handle.value == 0 and index < device_count.value:
+        dwf.FDwfDeviceOpen(ctypes.c_int(index), ctypes.byref(device_handle))
+        index += 1  # increment the index and try again if the device is busy
+
+    # check connected device type
+    device_name = ""
+    if device_handle.value != 0:
+        device_id = ctypes.c_int()
+        device_rev = ctypes.c_int()
+        dwf.FDwfEnumDeviceType(ctypes.c_int(index - 1), ctypes.byref(device_id), ctypes.byref(device_rev))
+
+        # decode device id
+        for pair in device_names:
+            if pair[1].value == device_id.value:
+                device_name = pair[0]
+                break
+
+    return device_handle, device_name
