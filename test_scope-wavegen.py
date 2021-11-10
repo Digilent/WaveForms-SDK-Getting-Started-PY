@@ -5,37 +5,40 @@ import matplotlib.pyplot as plt   # needed for plotting
 """-----------------------------------------------------------------------"""
 
 # connect to the device
-device_handle = device.open("Analog Discovery 2")
+device_handle, device_name = device.open()
 
 # check for connection errors
 device.check_error(device_handle)
 
 """-----------------------------------"""
 
-# initialize the scope with default settings
-scope.open(device_handle)
+# handle devices without analog I/O channels
+if device_name != "Digital Discovery":
 
-# set up triggering on scope channel 1
-scope.trigger(device_handle, enable=True, source=scope.trigger_source.analog, channel=1, level=0)
+    # initialize the scope with default settings
+    scope.open(device_handle)
 
-# generate a 10KHz sine signal with 2V amplitude on channel 1
-wavegen.generate(device_handle, channel=1, function=wavegen.function.sine, offset=0, frequency=10e03, amplitude=2)
+    # set up triggering on scope channel 1
+    scope.trigger(device_handle, enable=True, source=scope.trigger_source.analog, channel=1, level=0)
 
-# record data with the scopeon channel 1
-buffer, time = scope.record(device_handle, channel=1)
+    # generate a 10KHz sine signal with 2V amplitude on channel 1
+    wavegen.generate(device_handle, channel=1, function=wavegen.function.sine, offset=0, frequency=10e03, amplitude=2)
 
-# plot
-time = [moment * 1e03 for moment in time]   # convert time to ms
-plt.plot(time, buffer)
-plt.xlabel("time [ms]")
-plt.ylabel("voltage [V]")
-plt.show()
+    # record data with the scopeon channel 1
+    buffer, time = scope.record(device_handle, channel=1)
 
-# reset the scope
-scope.close(device_handle)
+    # plot
+    time = [moment * 1e03 for moment in time]   # convert time to ms
+    plt.plot(time, buffer)
+    plt.xlabel("time [ms]")
+    plt.ylabel("voltage [V]")
+    plt.show()
 
-# reset the wavegen
-wavegen.close(device_handle)
+    # reset the scope
+    scope.close(device_handle)
+
+    # reset the wavegen
+    wavegen.close(device_handle)
 
 """-----------------------------------"""
 

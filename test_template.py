@@ -3,7 +3,7 @@ from WF_SDK import device       # import instruments
 """-----------------------------------------------------------------------"""
 
 # connect to the device
-device_handle = device.open()
+device_handle, device_name = device.open()
 
 # check for connection errors
 device.check_error(device_handle)

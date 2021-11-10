@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt   # needed for plotting
 """-----------------------------------------------------------------------"""
 
 # connect to the device
-device_handle = device.open()
+device_handle, device_name = device.open()
 
 # check for connection errors
 device.check_error(device_handle)
