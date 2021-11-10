@@ -38,7 +38,7 @@ def open(device=None):
 
         # check for mathces
         if index == -1:
-            print("Error: No such device")
+            print("Error: No " + device + " is connected")
             quit()
         
     else:
