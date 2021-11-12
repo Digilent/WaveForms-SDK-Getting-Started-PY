@@ -1,4 +1,4 @@
-def receive(device_handle):
+def read(device_handle):
     """
         receives data from UART
         

@@ -66,7 +66,7 @@ def open(device_handle, rx, tx, baud_rate=9600, parity=None, data_bits=8, stop_b
 
 """-----------------------------------------------------------------------"""
 
-def receive(device_handle):
+def read(device_handle):
     """
         receives data from UART
         
