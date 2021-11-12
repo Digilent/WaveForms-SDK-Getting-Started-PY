@@ -1,4 +1,4 @@
-""" STATIC I/O CONTROL FUNCTIONS: set_mode, get_state, set_state, close """
+""" STATIC I/O CONTROL FUNCTIONS: set_mode, get_state, set_state, set_current, set_pull, close """
 
 import ctypes                            # import the C compatible data types
 import WF_SDK.dwfconstants as constants  # import every constant

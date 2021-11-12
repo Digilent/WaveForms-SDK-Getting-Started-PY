@@ -1,4 +1,4 @@
-""" PROTOCOL: UART CONTROL FUNCTIONS: generate, close """
+""" PROTOCOL: UART CONTROL FUNCTIONS: open, read, write, close """
 
 import ctypes                            # import the C compatible data types
 import WF_SDK.dwfconstants as constants  # import every constant

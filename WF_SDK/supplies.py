@@ -1,4 +1,4 @@
-""" POWER SUPPLIES CONTROL FUNCTIONS: switch_fixed, switch_variable, switch_digital, close """
+""" POWER SUPPLIES CONTROL FUNCTIONS: switch, switch_fixed, switch_variable, switch_digital, close """
 
 import ctypes                            # import the C compatible data types
 import WF_SDK.dwfconstants as constants  # import every constant

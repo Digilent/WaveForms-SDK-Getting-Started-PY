@@ -1,4 +1,4 @@
-""" PROTOCOL: I2C CONTROL FUNCTIONS: generate, close """
+""" PROTOCOL: I2C CONTROL FUNCTIONS: open, read, write, exchange, spy, close """
 
 import ctypes                            # import the C compatible data types
 import WF_SDK.dwfconstants as constants  # import every constant
