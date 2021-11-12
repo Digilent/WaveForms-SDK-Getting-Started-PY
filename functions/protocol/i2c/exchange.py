@@ -27,8 +27,7 @@ def exchange(device_handle, data, count, address):
     dwf.FDwfDigitalI2cWriteRead(device_handle, ctypes.c_int(address), data, ctypes.c_int(ctypes.sizeof(data)-1), buffer, ctypes.c_int(count), ctypes.byref(nak))
 
     # decode data
-    rec_data = [str(bin(element))[2:] for element in buffer]
-    rec_data = [int(element, 2) for element in rec_data]
+    rec_data = list(buffer.value)
     rec_data = "".join(chr(element) for element in rec_data)
 
     # check for not acknowledged

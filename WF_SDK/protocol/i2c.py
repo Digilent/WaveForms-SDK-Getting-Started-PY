@@ -111,8 +111,7 @@ def read(device_handle, count, address):
     dwf.FDwfDigitalI2cRead(device_handle, ctypes.c_int(address), buffer, ctypes.c_int(count), ctypes.byref(nak))
 
     # decode data
-    data = [str(bin(element))[2:] for element in buffer]
-    data = [int(element, 2) for element in data]
+    data = list(buffer.value)
     data = "".join(chr(element) for element in data)
 
     # check for not acknowledged
@@ -152,8 +151,7 @@ def exchange(device_handle, data, count, address):
     dwf.FDwfDigitalI2cWriteRead(device_handle, ctypes.c_int(address), data, ctypes.c_int(ctypes.sizeof(data)-1), buffer, ctypes.c_int(count), ctypes.byref(nak))
 
     # decode data
-    rec_data = [str(bin(element))[2:] for element in buffer]
-    rec_data = [int(element, 2) for element in rec_data]
+    rec_data = list(buffer.value)
     rec_data = "".join(chr(element) for element in rec_data)
 
     # check for not acknowledged
@@ -216,8 +214,7 @@ def spy(device_handle, count = 16):
             message.direction = "Read"
         
         # get message
-        message.data = [str(bin(element))[3:] for element in data]
-        message.data = [int(element, 2) for element in message.data]
+        message.data = list(data.value)
         message.data = "".join(chr(element) for element in message.data)
 
         if stop.value != 0:

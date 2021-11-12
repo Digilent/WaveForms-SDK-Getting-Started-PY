@@ -50,8 +50,7 @@ def spy(device_handle, count = 16):
             message.direction = "Read"
         
         # get message
-        message.data = [str(bin(element))[3:] for element in data]
-        message.data = [int(element, 2) for element in message.data]
+        message.data = list(data.value)
         message.data = "".join(chr(element) for element in message.data)
 
         if stop.value != 0:

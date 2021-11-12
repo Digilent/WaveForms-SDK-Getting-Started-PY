@@ -17,8 +17,7 @@ def read(device_handle, count, address):
     dwf.FDwfDigitalI2cRead(device_handle, ctypes.c_int(address), buffer, ctypes.c_int(count), ctypes.byref(nak))
 
     # decode data
-    data = [str(bin(element))[2:] for element in buffer]
-    data = [int(element, 2) for element in data]
+    data = list(buffer.value)
     data = "".join(chr(element) for element in data)
 
     # check for not acknowledged
