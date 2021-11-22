@@ -21,13 +21,14 @@ timeout = 1000
 
 # start the power supplies
 supplies.switch(device_handle, device_name, True, True, False, 3.3, 0)
+sleep(0.1)    # delay
 
 # initialize the reset line
 static.set_mode(device_handle, reset, output=True)
 static.set_state(device_handle, reset, False)
 
 # initialize the uart interface on DIO0 and DIO1
-uart.open(device_handle, rx=0, tx=1, baud_rate=9600)
+uart.open(device_handle, tx=0, rx=1, baud_rate=9600)
 
 try:
     # repeat
@@ -50,9 +51,17 @@ try:
         static.set_state(device_handle, reset, False)    # disable the device
 
         # convert raw data into distance
-        if len(message) > 2 and message[1] == chr(234):
-            value = float(message[2:]) * 2.54   # convert to cm
-        else:
+        try:
+            if message[0] == 234:
+                message.pop(0)    # remove first byte
+                value = 0
+                for element in message:
+                    if element > 47 and element < 58:
+                        # concatenate valid bytes
+                        value = value * 10 + (element - 48)
+                value *= 2.54   # convert to cm
+        except:
+            # error in message
             value = -1
 
         # display the distance
