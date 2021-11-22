@@ -7,7 +7,7 @@ def exchange(device_handle, data, count, address):
                     - count (number of bytes to receive)
                     - address (8-bit address of the slave device)
         
-        return:     - string containing the received bytes
+        return:     - integer list containing the received bytes
                     - error message or empty string
     """
     # create buffer to store data
@@ -20,15 +20,17 @@ def exchange(device_handle, data, count, address):
         data = "".join(chr(element) for element in data)
 
     # encode the string into a string buffer
-    data = ctypes.create_string_buffer(data.encode("UTF-8"))
+    data = bytes(data, "utf-8")
+    tx_buffer = (ctypes.c_ubyte * len(data))()
+    for index in range(0, len(tx_buffer)):
+        tx_buffer[index] = ctypes.c_ubyte(data[index])
 
     # send and receive
     nak = ctypes.c_int()
-    dwf.FDwfDigitalI2cWriteRead(device_handle, ctypes.c_int(address), data, ctypes.c_int(ctypes.sizeof(data)-1), buffer, ctypes.c_int(count), ctypes.byref(nak))
+    dwf.FDwfDigitalI2cWriteRead(device_handle, ctypes.c_int(address << 1), tx_buffer, ctypes.c_int(ctypes.sizeof(tx_buffer)), buffer, ctypes.c_int(count), ctypes.byref(nak))
 
     # decode data
-    rec_data = list(buffer.value)
-    rec_data = "".join(chr(element) for element in rec_data)
+    rec_data = [int(element) for element in buffer]
 
     # check for not acknowledged
     if nak.value != 0:

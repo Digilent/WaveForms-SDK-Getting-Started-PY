@@ -16,7 +16,7 @@ def spy(device_handle, count = 16):
         start = ""
         address = 0
         direction = ""
-        data = ""
+        data = []
         stop = ""
 
     # start the interfcae
@@ -50,8 +50,7 @@ def spy(device_handle, count = 16):
             message.direction = "Read"
         
         # get message
-        message.data = list(data.value)
-        message.data = "".join(chr(element) for element in message.data)
+        message.data = [int(element) for element in data]
 
         if stop.value != 0:
             message.stop = "Stop"

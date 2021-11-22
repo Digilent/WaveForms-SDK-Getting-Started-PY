@@ -19,6 +19,7 @@ TMP2_address = 0x4B
 
 # start the power supplies
 supplies.switch(device_handle, device_name, True, True, False, 3.3, 0)
+sleep(0.1)    # delay
 
 # initialize the i2c interface on DIO0 and DIO1
 i2c.open(device_handle, sda=0, scl=1)
@@ -26,17 +27,20 @@ i2c.open(device_handle, sda=0, scl=1)
 # initialize the PMOD TMP2 (set output size to 16-bit)
 i2c.write(device_handle, [0x03, 0x80], TMP2_address)
 
+# save custom character
+i2c.write(device_handle, "\x1b[7;5;7;0;0;0;0;0;0d", CLS_address)   # define character
+i2c.write(device_handle, "\x1b[3p", CLS_address) # load character table
+
 try:
     # repeat
     while True:
         # clear the screen and home cursor
-        i2c.write(device_handle, "\x1b[j", CLS_address)
+        i2c.write(device_handle, [0x1B, 0x5B, 0x6A], CLS_address)
 
         # display a message
         i2c.write(device_handle, "Temp: ", CLS_address)
 
         # read the temperature
-        i2c.write(device_handle, "", TMP2_address)  # address the device
         message, error = i2c.read(device_handle, 2, TMP2_address)   # read 2 bytes
         value = (int(message[0]) << 8) | int(message[1])    # create integer from received bytes
         if ((value >> 15) & 1) == 0:
@@ -48,7 +52,8 @@ try:
         i2c.write(device_handle, str(round(value, 2)), CLS_address)
 
         # display a message
-        i2c.write(device_handle, [223, 67], CLS_address)
+        i2c.write(device_handle, 0, CLS_address)
+        i2c.write(device_handle, "C", CLS_address)
 
         # delay 1s
         sleep(1)

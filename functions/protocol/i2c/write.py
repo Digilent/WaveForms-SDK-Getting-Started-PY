@@ -15,11 +15,14 @@ def write(device_handle, data, address):
         data = "".join(chr(element) for element in data)
 
     # encode the string into a string buffer
-    data = ctypes.create_string_buffer(data.encode("UTF-8"))
+    data = bytes(data, "utf-8")
+    buffer = (ctypes.c_ubyte * len(data))()
+    for index in range(0, len(buffer)):
+        buffer[index] = ctypes.c_ubyte(data[index])
 
     # send
     nak = ctypes.c_int()
-    dwf.FDwfDigitalI2cWrite(device_handle, ctypes.c_int(address), data, ctypes.c_int(ctypes.sizeof(data)-1), ctypes.byref(nak))
+    dwf.FDwfDigitalI2cWrite(device_handle, ctypes.c_int(address << 1), buffer, ctypes.c_int(ctypes.sizeof(buffer)), ctypes.byref(nak))
 
     # check for not acknowledged
     if nak.value != 0:
