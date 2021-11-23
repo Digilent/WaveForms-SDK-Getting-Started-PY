@@ -6,7 +6,7 @@ def read(device_handle, count, cs):
                     - count (number of bytes to receive)
                     - chip select line number
 
-        return:     - string containing the received bytes
+        return:     - integer list containing the received bytes
     """
     # enable the chip select line
     dwf.FDwfDigitalSpiSelect(device_handle, ctypes.c_int(cs), ctypes.c_int(0))
@@ -21,7 +21,6 @@ def read(device_handle, count, cs):
     dwf.FDwfDigitalSpiSelect(device_handle, ctypes.c_int(cs), ctypes.c_int(1))
 
     # decode data
-    data = list(buffer.value)
-    data = "".join(chr(element) for element in data)
+    data = [int(element) for element in buffer]
 
     return data

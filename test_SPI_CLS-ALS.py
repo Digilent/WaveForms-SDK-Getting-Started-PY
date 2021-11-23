@@ -31,10 +31,10 @@ try:
         spi.write(device_handle, "\x1b[j", CLS_cs)
 
         # display a message
-        spi.write(device_handle, "Temp: ", CLS_cs)
+        spi.write(device_handle, "Lum: ", CLS_cs)
 
         # read the temperature
-        message = spi.exchange(device_handle, "00", 2, ALS_cs)
+        message = spi.read(device_handle, 2, ALS_cs)
         value = ((int(message[0]) << 3) | (int(message[1]) >> 4)) / 1.27
 
         # display the temperature

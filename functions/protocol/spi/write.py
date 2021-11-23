@@ -16,10 +16,13 @@ def write(device_handle, data, cs):
     dwf.FDwfDigitalSpiSelect(device_handle, ctypes.c_int(cs), ctypes.c_int(0))
 
     # create buffer to write
-    data = (ctypes.c_ubyte * len(data))(*[ctypes.c_ubyte(ord(character)) for character in data])
+    data = bytes(data, "utf-8")
+    buffer = (ctypes.c_ubyte * len(data))()
+    for index in range(0, len(buffer)):
+        buffer[index] = ctypes.c_ubyte(data[index])
 
     # write array of 8 bit elements
-    dwf.FDwfDigitalSpiWrite(device_handle, ctypes.c_int(1), ctypes.c_int(8), data, ctypes.c_int(len(data)))
+    dwf.FDwfDigitalSpiWrite(device_handle, ctypes.c_int(1), ctypes.c_int(8), buffer, ctypes.c_int(len(buffer)))
 
     # disable the chip select line
     dwf.FDwfDigitalSpiSelect(device_handle, ctypes.c_int(cs), ctypes.c_int(1))
