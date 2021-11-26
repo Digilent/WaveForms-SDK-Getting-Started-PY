@@ -13,7 +13,12 @@ device.check_error(device_handle)
 """-----------------------------------"""
 
 # start the positive supply
-supplies.switch(device_handle, device_name, True, True, False, 3.3, 0)
+class supplies_state:
+    device_name = device_name
+    master_state = True
+    state = True
+    voltage = 3.3
+supplies.switch(device_handle, supplies_state)
 
 # set maximum current
 if device_name == "Digital Discovery" or device_name == "Analog Discovery Pro 3X50":
@@ -52,7 +57,8 @@ finally:
     static.close(device_handle)
 
     # stop and reset the power supplies
-    supplies.switch(device_handle, device_name, False, False, False, 0, 0)
+    supplies_state.master_state = False
+    supplies.switch(device_handle, supplies_state)
     supplies.close(device_handle)
 
     """-----------------------------------"""

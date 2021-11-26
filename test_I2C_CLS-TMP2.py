@@ -18,7 +18,12 @@ CLS_address = 0x48
 TMP2_address = 0x4B
 
 # start the power supplies
-supplies.switch(device_handle, device_name, True, True, False, 3.3, 0)
+class supplies_state:
+    device_name = device_name
+    master_state = True
+    state = True
+    voltage = 3.3
+supplies.switch(device_handle, supplies_state)
 sleep(0.1)    # delay
 
 # initialize the i2c interface on DIO0 and DIO1
@@ -66,7 +71,8 @@ except KeyboardInterrupt:
 i2c.close(device_handle)
 
 # stop and reset the power supplies
-supplies.switch(device_handle, device_name, False, False, False, 0, 0)
+supplies_state.master_state = False
+supplies.switch(device_handle, supplies_state)
 supplies.close(device_handle)
 
 """-----------------------------------"""

@@ -18,7 +18,12 @@ CLS_cs = 0
 ALS_cs = 1
 
 # start the power supplies
-supplies.switch(device_handle, device_name, True, True, False, 3.3, 0)
+class supplies_state:
+    device_name = device_name
+    master_state = True
+    state = True
+    voltage = 3.3
+supplies.switch(device_handle, supplies_state)
 
 # initialize the spi interface on DIO0, DIO1, DIO2, DIO3 and DIO4
 spi.open(device_handle, CLS_cs, sck=2, miso=3, mosi=4)
@@ -54,7 +59,8 @@ except KeyboardInterrupt:
 spi.close(device_handle)
 
 # stop and reset the power supplies
-supplies.switch(device_handle, device_name, False, False, False, 0, 0)
+supplies_state.master_state = False
+supplies.switch(device_handle, supplies_state)
 supplies.close(device_handle)
 
 """-----------------------------------"""
