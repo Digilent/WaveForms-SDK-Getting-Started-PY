@@ -113,7 +113,7 @@ def switch_6V(device_handle, master_state, voltage, current=1):
     dwf.FDwfAnalogIOChannelNodeSet(device_handle, ctypes.c_int(0), ctypes.c_int(2), ctypes.c_double(current))
     
     # start/stop the supply - master switch
-    dwf.FDwfAnalogIOChannelNodeSet(device_handle, ctypes.c_int(0), ctypes.c_int(0), ctypes.c_int(master_state))
+    dwf.FDwfAnalogIOChannelNodeSet(device_handle, ctypes.c_int(0), ctypes.c_int(0), ctypes.c_double(float(master_state)))
     return
 
 """-----------------------------------------------------------------------"""
@@ -147,10 +147,10 @@ def switch_25V(device_handle, positive_state, negative_state, positive_voltage, 
     dwf.FDwfAnalogIOChannelNodeSet(device_handle, ctypes.c_int(2), ctypes.c_int(2), ctypes.c_double(negative_current))
 
     # enable/disable the positive supply
-    dwf.FDwfAnalogIOChannelNodeSet(device_handle, ctypes.c_int(1), ctypes.c_int(0), ctypes.c_int(positive_state))
+    dwf.FDwfAnalogIOChannelNodeSet(device_handle, ctypes.c_int(1), ctypes.c_int(0), ctypes.c_double(float(positive_state)))
     
     # enable/disable the negative supply
-    dwf.FDwfAnalogIOChannelNodeSet(device_handle, ctypes.c_int(2), ctypes.c_int(0), ctypes.c_int(negative_state))
+    dwf.FDwfAnalogIOChannelNodeSet(device_handle, ctypes.c_int(2), ctypes.c_int(0), ctypes.c_double(float(negative_state)))
     return
 
 """-----------------------------------------------------------------------"""
