@@ -71,7 +71,7 @@ def open(device=None):
     """
     device_names = [("Analog Discovery", constants.devidDiscovery), ("Analog Discovery 2", constants.devidDiscovery2),
                     ("Analog Discovery Studio", constants.devidDiscovery2), ("Digital Discovery", constants.devidDDiscovery),
-                    ("Analog Discovery Pro 3X50", constants.devidADP3X50)]
+                    ("Analog Discovery Pro 3X50", constants.devidADP3X50), ("Analog Discovery Pro 5250", ctypes.c_int(8))]
     
     # decode device names
     device_type = constants.enumfilterAll
