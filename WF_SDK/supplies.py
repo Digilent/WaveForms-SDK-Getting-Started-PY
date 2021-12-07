@@ -99,8 +99,7 @@ def switch_6V(device_handle, master_state, voltage, current=1):
     """
         turn the 6V supply on the ADP5250 on/off
 
-        parameters: - device handle
-                    - master switch - True = on, False = off
+        parameters: - master switch - True = on, False = off
                     - voltage in volts between 0-6
                     - current in amperes between 0-1
     """
@@ -114,6 +113,7 @@ def switch_6V(device_handle, master_state, voltage, current=1):
     
     # start/stop the supply - master switch
     dwf.FDwfAnalogIOChannelNodeSet(device_handle, ctypes.c_int(0), ctypes.c_int(0), ctypes.c_double(float(master_state)))
+    dwf.FDwfAnalogIOEnableSet(device_handle, ctypes.c_int(master_state))
     return
 
 """-----------------------------------------------------------------------"""
@@ -122,8 +122,7 @@ def switch_25V(device_handle, positive_state, negative_state, positive_voltage, 
     """
         turn the 25V power supplies on/off on the ADP5250
 
-        parameters: - device handle
-                    - positive supply switch - True = on, False = off
+        parameters: - positive supply switch - True = on, False = off
                     - negative supply switch - True = on, False = off
                     - positive supply voltage in Volts
                     - negative supply voltage in Volts
@@ -135,7 +134,7 @@ def switch_25V(device_handle, positive_state, negative_state, positive_voltage, 
     dwf.FDwfAnalogIOChannelNodeSet(device_handle, ctypes.c_int(1), ctypes.c_int(1), ctypes.c_double(positive_voltage))
     
     # set negative voltage
-    negative_voltage = max(-25, min(0, negative_voltage))
+    negative_voltage *= -1
     dwf.FDwfAnalogIOChannelNodeSet(device_handle, ctypes.c_int(2), ctypes.c_int(1), ctypes.c_double(negative_voltage))
 
     # set positive current limit
@@ -143,14 +142,15 @@ def switch_25V(device_handle, positive_state, negative_state, positive_voltage, 
     dwf.FDwfAnalogIOChannelNodeSet(device_handle, ctypes.c_int(1), ctypes.c_int(2), ctypes.c_double(positive_current))
     
     # set negative current limit
-    negative_current = max(-0.5, min(0, negative_current))
+    negative_current *= -1
     dwf.FDwfAnalogIOChannelNodeSet(device_handle, ctypes.c_int(2), ctypes.c_int(2), ctypes.c_double(negative_current))
 
-    # enable/disable the positive supply
+    # enable/disable the supplies
     dwf.FDwfAnalogIOChannelNodeSet(device_handle, ctypes.c_int(1), ctypes.c_int(0), ctypes.c_double(float(positive_state)))
-    
-    # enable/disable the negative supply
     dwf.FDwfAnalogIOChannelNodeSet(device_handle, ctypes.c_int(2), ctypes.c_int(0), ctypes.c_double(float(negative_state)))
+    
+    # master switch
+    dwf.FDwfAnalogIOEnableSet(device_handle, ctypes.c_int(positive_state or negative_state))
     return
 
 """-----------------------------------------------------------------------"""
