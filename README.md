@@ -44,7 +44,7 @@ Check: [Getting Started with the WaveForms SDK](https://digilent.com/reference/t
 
 ### Digital Multimeter
 * open
-* measure - **UNTESTED**
+* measure
 * close
 
 ### Logic Analyzer
