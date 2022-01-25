@@ -4,7 +4,7 @@ with open("README.md", "r") as f:
     long_description = f.read()
 
 setup(
-   name = "WFSDK",
+   name = "WF_SDK",
    version = "1.0",
    description = "This module realizes communication with Digilent Test & Measurement devices",
    license = "MIT",
