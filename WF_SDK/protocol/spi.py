@@ -25,11 +25,11 @@ import dwfconstants as constants
 
 """-----------------------------------------------------------------------"""
 
-def open(device_handle, cs, sck, miso=None, mosi=None, clk_frequency=1e06, mode=0, order=True):
+def open(device_data, cs, sck, miso=None, mosi=None, clk_frequency=1e06, mode=0, order=True):
     """
         initializes SPI communication
 
-        parameters: - device handle
+        parameters: - device data
                     - cs (DIO line used for chip select)
                     - sck (DIO line used for serial clock)
                     - miso (DIO line used for master in - slave out, optional)
@@ -39,67 +39,67 @@ def open(device_handle, cs, sck, miso=None, mosi=None, clk_frequency=1e06, mode=
                     - order (endianness, True means MSB first - default, False means LSB first)
     """
     # set the clock frequency
-    dwf.FDwfDigitalSpiFrequencySet(device_handle, ctypes.c_double(clk_frequency))
+    dwf.FDwfDigitalSpiFrequencySet(device_data.handle, ctypes.c_double(clk_frequency))
 
     # set the clock pin
-    dwf.FDwfDigitalSpiClockSet(device_handle, ctypes.c_int(sck))
+    dwf.FDwfDigitalSpiClockSet(device_data.handle, ctypes.c_int(sck))
 
     if mosi != None:
         # set the mosi pin
-        dwf.FDwfDigitalSpiDataSet(device_handle, ctypes.c_int(0), ctypes.c_int(mosi))
+        dwf.FDwfDigitalSpiDataSet(device_data.handle, ctypes.c_int(0), ctypes.c_int(mosi))
 
         # set the initial state
-        dwf.FDwfDigitalSpiIdleSet(device_handle, ctypes.c_int(0), constants.DwfDigitalOutIdleZet)
+        dwf.FDwfDigitalSpiIdleSet(device_data.handle, ctypes.c_int(0), constants.DwfDigitalOutIdleZet)
 
     if miso != None:
         # set the miso pin
-        dwf.FDwfDigitalSpiDataSet(device_handle, ctypes.c_int(1), ctypes.c_int(miso))
+        dwf.FDwfDigitalSpiDataSet(device_data.handle, ctypes.c_int(1), ctypes.c_int(miso))
 
         # set the initial state
-        dwf.FDwfDigitalSpiIdleSet(device_handle, ctypes.c_int(1), constants.DwfDigitalOutIdleZet)
+        dwf.FDwfDigitalSpiIdleSet(device_data.handle, ctypes.c_int(1), constants.DwfDigitalOutIdleZet)
 
     # set the SPI mode
-    dwf.FDwfDigitalSpiModeSet(device_handle, ctypes.c_int(mode))
+    dwf.FDwfDigitalSpiModeSet(device_data.handle, ctypes.c_int(mode))
 
     # set endianness
     if order:
         # MSB first
-        dwf.FDwfDigitalSpiOrderSet(device_handle, ctypes.c_int(1))
+        dwf.FDwfDigitalSpiOrderSet(device_data.handle, ctypes.c_int(1))
     else:
         # LSB first
-        dwf.FDwfDigitalSpiOrderSet(device_handle, ctypes.c_int(0))
+        dwf.FDwfDigitalSpiOrderSet(device_data.handle, ctypes.c_int(0))
 
     # set the cs pin HIGH
-    dwf.FDwfDigitalSpiSelect(device_handle, ctypes.c_int(cs), ctypes.c_int(1))
+    dwf.FDwfDigitalSpiSelect(device_data.handle, ctypes.c_int(cs), ctypes.c_int(1))
 
     # dummy write
-    dwf.FDwfDigitalSpiWriteOne(device_handle, ctypes.c_int(1), ctypes.c_int(0), ctypes.c_int(0))
+    dwf.FDwfDigitalSpiWriteOne(device_data.handle, ctypes.c_int(1), ctypes.c_int(0), ctypes.c_int(0))
     
     return
 
 """-----------------------------------------------------------------------"""
 
-def read(device_handle, count, cs):
+def read(device_data, count, cs):
     """
         receives data from SPI
 
-        parameters: - device handle
+        parameters: - device data
                     - count (number of bytes to receive)
                     - chip select line number
 
         return:     - integer list containing the received bytes
     """
     # enable the chip select line
-    dwf.FDwfDigitalSpiSelect(device_handle, ctypes.c_int(cs), ctypes.c_int(0))
+    dwf.FDwfDigitalSpiSelect(device_data.handle, ctypes.c_int(cs), ctypes.c_int(0))
 
     # create buffer to store data
     buffer = (ctypes.c_ubyte*count)()
 
     # read array of 8 bit elements
-    dwf.FDwfDigitalSpiRead(device_handle, ctypes.c_int(1), ctypes.c_int(8), buffer, ctypes.c_int(len(buffer)))
+    dwf.FDwfDigitalSpiRead(device_data.handle, ctypes.c_int(1), ctypes.c_int(8), buffer, ctypes.c_int(len(buffer)))
 
     # disable the chip select line
-    dwf.FDwfDigitalSpiSelect(device_handle, ctypes.c_int(cs), ctypes.c_int(1))
+    dwf.FDwfDigitalSpiSelect(device_data.handle, ctypes.c_int(cs), ctypes.c_int(1))
 
     # decode data
     data = [int(element) for element in buffer]
@@ -108,11 +108,11 @@ def read(device_handle, count, cs):
 
 """-----------------------------------------------------------------------"""
 
-def write(device_handle, data, cs):
+def write(device_data, data, cs):
     """
         send data through SPI
 
-        parameters: - device handle
+        parameters: - device data
                     - data of type string, int, or list of characters/integers
                     - chip select line number
     """
@@ -123,7 +123,7 @@ def write(device_handle, data, cs):
         data = "".join(chr(element) for element in data)
 
     # enable the chip select line
-    dwf.FDwfDigitalSpiSelect(device_handle, ctypes.c_int(cs), ctypes.c_int(0))
+    dwf.FDwfDigitalSpiSelect(device_data.handle, ctypes.c_int(cs), ctypes.c_int(0))
 
     # create buffer to write
     data = bytes(data, "utf-8")
@@ -132,20 +132,20 @@ def write(device_handle, data, cs):
         buffer[index] = ctypes.c_ubyte(data[index])
 
     # write array of 8 bit elements
-    dwf.FDwfDigitalSpiWrite(device_handle, ctypes.c_int(1), ctypes.c_int(8), buffer, ctypes.c_int(len(buffer)))
+    dwf.FDwfDigitalSpiWrite(device_data.handle, ctypes.c_int(1), ctypes.c_int(8), buffer, ctypes.c_int(len(buffer)))
 
     # disable the chip select line
-    dwf.FDwfDigitalSpiSelect(device_handle, ctypes.c_int(cs), ctypes.c_int(1))
+    dwf.FDwfDigitalSpiSelect(device_data.handle, ctypes.c_int(cs), ctypes.c_int(1))
 
     return
 
 """-----------------------------------------------------------------------"""
 
-def exchange(device_handle, data, count, cs):
+def exchange(device_data, data, count, cs):
     """
         sends and receives data using the SPI interface
         
-        parameters: - device handle
+        parameters: - device data
                     - data of type string, int, or list of characters/integers
                     - count (number of bytes to receive)
                     - chip select line number
@@ -159,7 +159,7 @@ def exchange(device_handle, data, count, cs):
         data = "".join(chr(element) for element in data)
 
     # enable the chip select line
-    dwf.FDwfDigitalSpiSelect(device_handle, ctypes.c_int(cs), ctypes.c_int(0))
+    dwf.FDwfDigitalSpiSelect(device_data.handle, ctypes.c_int(cs), ctypes.c_int(0))
 
     # create buffer to write
     data = bytes(data, "utf-8")
@@ -171,10 +171,10 @@ def exchange(device_handle, data, count, cs):
     rx_buffer = (ctypes.c_ubyte*count)()
 
     # write to MOSI and read from MISO
-    dwf.FDwfDigitalSpiWriteRead(device_handle, ctypes.c_int(1), ctypes.c_int(8), tx_buffer, ctypes.c_int(len(tx_buffer)), rx_buffer, ctypes.c_int(len(rx_buffer)))
+    dwf.FDwfDigitalSpiWriteRead(device_data.handle, ctypes.c_int(1), ctypes.c_int(8), tx_buffer, ctypes.c_int(len(tx_buffer)), rx_buffer, ctypes.c_int(len(rx_buffer)))
 
     # disable the chip select line
-    dwf.FDwfDigitalSpiSelect(device_handle, ctypes.c_int(cs), ctypes.c_int(1))
+    dwf.FDwfDigitalSpiSelect(device_data.handle, ctypes.c_int(cs), ctypes.c_int(1))
 
     # decode data
     data = [int(element) for element in rx_buffer]
@@ -183,11 +183,11 @@ def exchange(device_handle, data, count, cs):
 
 """-----------------------------------------------------------------------"""
 
-def spy(device_handle, count, cs, sck, mosi=None, miso=None, word_size=8):
+def spy(device_data, count, cs, sck, mosi=None, miso=None, word_size=8):
     """
         receives data from SPI
 
-        parameters: - device handle
+        parameters: - device data
                     - count (number of bytes to receive)
                     - chip select line number
                     - serial clock line number
@@ -207,32 +207,32 @@ def spy(device_handle, count, cs, sck, mosi=None, miso=None, word_size=8):
         miso = 0
 
     # record mode
-    dwf.FDwfDigitalInAcquisitionModeSet(device_handle, constants.acqmodeRecord)
+    dwf.FDwfDigitalInAcquisitionModeSet(device_data.handle, constants.acqmodeRecord)
 
     # for sync mode set divider to -1 
-    dwf.FDwfDigitalInDividerSet(device_handle, ctypes.c_int(-1))
+    dwf.FDwfDigitalInDividerSet(device_data.handle, ctypes.c_int(-1))
 
     # 8 bit per sample format, DIO 0-7
-    dwf.FDwfDigitalInSampleFormatSet(device_handle, ctypes.c_int(8))
+    dwf.FDwfDigitalInSampleFormatSet(device_data.handle, ctypes.c_int(8))
 
     # continuous sampling 
-    dwf.FDwfDigitalInTriggerPositionSet(device_handle, ctypes.c_int(-1))
+    dwf.FDwfDigitalInTriggerPositionSet(device_data.handle, ctypes.c_int(-1))
 
     # in sync mode the trigger is used for sampling condition
     # trigger detector mask: low & high & (rising | falling)
-    dwf.FDwfDigitalInTriggerSet(device_handle, ctypes.c_int(0), ctypes.c_int(0), ctypes.c_int((1 << sck) | (1 << cs)), ctypes.c_int(0))
+    dwf.FDwfDigitalInTriggerSet(device_data.handle, ctypes.c_int(0), ctypes.c_int(0), ctypes.c_int((1 << sck) | (1 << cs)), ctypes.c_int(0))
     # sample on clock rising edge for sampling bits, or CS rising edge to detect frames
 
     # start detection
-    dwf.FDwfDigitalInConfigure(device_handle, ctypes.c_bool(0), ctypes.c_bool(1))
+    dwf.FDwfDigitalInConfigure(device_data.handle, ctypes.c_bool(0), ctypes.c_bool(1))
 
     # fill buffer
     status = ctypes.c_byte()
     available = ctypes.c_int()
     lost = ctypes.c_int()
     corrupted = ctypes.c_int()
-    dwf.FDwfDigitalInStatus(device_handle, ctypes.c_int(1), ctypes.byref(status))
-    dwf.FDwfDigitalInStatusRecord(device_handle, ctypes.byref(available), ctypes.byref(lost), ctypes.byref(corrupted))
+    dwf.FDwfDigitalInStatus(device_data.handle, ctypes.c_int(1), ctypes.byref(status))
+    dwf.FDwfDigitalInStatusRecord(device_data.handle, ctypes.byref(available), ctypes.byref(lost), ctypes.byref(corrupted))
 
     # check data integrity
     if lost.value :
@@ -246,7 +246,7 @@ def spy(device_handle, count, cs, sck, mosi=None, miso=None, word_size=8):
     
     # load data from internal buffer
     data = (ctypes.c_uint8 * available)()
-    dwf.FDwfDigitalInStatusData(device_handle, data, available)
+    dwf.FDwfDigitalInStatusData(device_data.handle, data, available)
 
     # get message
     bit_count = 0
@@ -293,9 +293,9 @@ def spy(device_handle, count, cs, sck, mosi=None, miso=None, word_size=8):
 
 """-----------------------------------------------------------------------"""
 
-def close(device_handle):
+def close(device_data):
     """
         reset the spi interface
     """
-    dwf.FDwfDigitalSpiReset(device_handle)
+    dwf.FDwfDigitalSpiReset(device_data.handle)
     return

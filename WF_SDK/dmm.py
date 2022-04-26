@@ -25,21 +25,21 @@ import dwfconstants as constants
 
 """-----------------------------------------------------------------------"""
 
-def open(device_handle):
+def open(device_data):
     """
         initialize the digital multimeter
     """
     # enable the DMM
-    dwf.FDwfAnalogIOChannelNodeSet(device_handle, ctypes.c_int(3), ctypes.c_int(0), ctypes.c_double(1.0))
+    dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(3), ctypes.c_int(0), ctypes.c_double(1.0))
     return
 
 """-----------------------------------------------------------------------"""
 
-def measure(device_handle, mode, ac=False, range=0, high_impedance=False):
+def measure(device_data, mode, ac=False, range=0, high_impedance=False):
     """
         measure a voltage/current/resistance/continuity/temperature
 
-        parameters: - device handler
+        parameters: - device data
                     - mode: "voltage", "low current", "high current", "resistance", "continuity", "diode", "temperature"
                     - ac: True means AC value, False means DC value, default is DC
                     - range: voltage/current/resistance/temperature range, 0 means auto, default is auto
@@ -51,70 +51,70 @@ def measure(device_handle, mode, ac=False, range=0, high_impedance=False):
     if mode == "voltage":
         # set coupling
         if ac:
-            dwf.FDwfAnalogIOChannelNodeSet(device_handle, ctypes.c_int(3), ctypes.c_int(1), constants.DwfDmmACVoltage)
+            dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(3), ctypes.c_int(1), constants.DwfDmmACVoltage)
         else:
-            dwf.FDwfAnalogIOChannelNodeSet(device_handle, ctypes.c_int(3), ctypes.c_int(1), constants.DwfDmmDCVoltage)
+            dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(3), ctypes.c_int(1), constants.DwfDmmDCVoltage)
 
         # set input impedance
         if high_impedance:
-            dwf.FDwfAnalogIOChannelNodeSet(device_handle, ctypes.c_int(3), ctypes.c_int(5), ctypes.c_double(1))
+            dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(3), ctypes.c_int(5), ctypes.c_double(1))
         else:
-            dwf.FDwfAnalogIOChannelNodeSet(device_handle, ctypes.c_int(3), ctypes.c_int(5), ctypes.c_double(0))
+            dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(3), ctypes.c_int(5), ctypes.c_double(0))
 
     # set high current mode
     elif mode == "high current":
         # set coupling
         if ac:
-            dwf.FDwfAnalogIOChannelNodeSet(device_handle, ctypes.c_int(3), ctypes.c_int(1), constants.DwfDmmACCurrent)
+            dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(3), ctypes.c_int(1), constants.DwfDmmACCurrent)
         else:
-            dwf.FDwfAnalogIOChannelNodeSet(device_handle, ctypes.c_int(3), ctypes.c_int(1), constants.DwfDmmDCCurrent)
+            dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(3), ctypes.c_int(1), constants.DwfDmmDCCurrent)
 
     # set low current mode
     elif mode == "low current":
         # set coupling
         if ac:
-            dwf.FDwfAnalogIOChannelNodeSet(device_handle, ctypes.c_int(3), ctypes.c_int(1), constants.DwfDmmACLowCurrent)
+            dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(3), ctypes.c_int(1), constants.DwfDmmACLowCurrent)
         else:
-            dwf.FDwfAnalogIOChannelNodeSet(device_handle, ctypes.c_int(3), ctypes.c_int(1), constants.DwfDmmDCLowCurrent)
+            dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(3), ctypes.c_int(1), constants.DwfDmmDCLowCurrent)
             
     # set resistance mode
     elif mode == "resistance":
-        dwf.FDwfAnalogIOChannelNodeSet(device_handle, ctypes.c_int(3), ctypes.c_int(1), constants.DwfDmmResistance)
+        dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(3), ctypes.c_int(1), constants.DwfDmmResistance)
 
     # set continuity mode
     elif mode == "continuity":
-        dwf.FDwfAnalogIOChannelNodeSet(device_handle, ctypes.c_int(3), ctypes.c_int(1), constants.DwfDmmContinuity)
+        dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(3), ctypes.c_int(1), constants.DwfDmmContinuity)
 
     # set diode mode
     elif mode == "diode":
-        dwf.FDwfAnalogIOChannelNodeSet(device_handle, ctypes.c_int(3), ctypes.c_int(1), constants.DwfDmmDiode)
+        dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(3), ctypes.c_int(1), constants.DwfDmmDiode)
 
     # set temperature mode
     elif mode == "temperature":
-        dwf.FDwfAnalogIOChannelNodeSet(device_handle, ctypes.c_int(3), ctypes.c_int(1), constants.DwfDmmTemperature)
+        dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(3), ctypes.c_int(1), constants.DwfDmmTemperature)
         
     # set range
-    dwf.FDwfAnalogIOChannelNodeSet(device_handle, ctypes.c_int(3), ctypes.c_int(2), ctypes.c_double(range))
+    dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(3), ctypes.c_int(2), ctypes.c_double(range))
 
     # fetch analog I/O status
-    if dwf.FDwfAnalogIOStatus(device_handle) == 0:
+    if dwf.FDwfAnalogIOStatus(device_data.handle) == 0:
         # signal error
         return None
 
     # get reading
     measurement = ctypes.c_double()
-    dwf.FDwfAnalogIOChannelNodeStatus(device_handle, ctypes.c_int(3), ctypes.c_int(3), ctypes.byref(measurement))
+    dwf.FDwfAnalogIOChannelNodeStatus(device_data.handle, ctypes.c_int(3), ctypes.c_int(3), ctypes.byref(measurement))
 
     return measurement.value
 
 """-----------------------------------------------------------------------"""
 
-def close(device_handle):
+def close(device_data):
     """
         reset the instrument
     """
     # disable the DMM
-    dwf.FDwfAnalogIOChannelNodeSet(device_handle, ctypes.c_int(3), ctypes.c_int(0), ctypes.c_double(0))
+    dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(3), ctypes.c_int(0), ctypes.c_double(0))
     # reset the instrument
-    dwf.FDwfAnalogIOReset(device_handle)
+    dwf.FDwfAnalogIOReset(device_data.handle)
     return

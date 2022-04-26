@@ -60,14 +60,20 @@ def open():
 
 """-----------------------------------------------------------------------"""
 
+class data:
+    """ stores the device handle and the device name """
+    handle = ctypes.c_int(0)
+    name = ""
+
+"""-----------------------------------------------------------------------"""
+
 def open(device=None):
     """
         open a specific device
 
         parameters: - device type: None (first device), "Analog Discovery", "Analog Discovery 2", "Analog Discovery Studio", "Digital Discovery", "Analog Discovery Pro 3X50" and "Analog Discovery Pro 5250"
     
-        returns:    - the device handle
-                    - the device name
+        returns:    - device data
     """
     device_names = [("Analog Discovery", constants.devidDiscovery), ("Analog Discovery 2", constants.devidDiscovery2),
                     ("Analog Discovery Studio", constants.devidDiscovery2), ("Digital Discovery", constants.devidDDiscovery),
@@ -114,16 +120,18 @@ def open(device=None):
                 device_name = pair[0]
                 break
 
-    return device_handle, device_name
+    data.handle = device_handle
+    data.name = device_name
+    return data
 
 """-----------------------------------------------------------------------"""
 
-def check_error(device_handle):
+def check_error(device_data):
     """
         check for connection errors
     """
     # if the device handle is empty after a connection attempt
-    if device_handle.value == constants.hdwfNone.value:
+    if device_data.handle.value == constants.hdwfNone.value:
         # check for errors
         err_nr = ctypes.c_int()            # variable for error number
         dwf.FDwfGetLastError(ctypes.byref(err_nr))  # get error number
@@ -140,9 +148,11 @@ def check_error(device_handle):
 
 """-----------------------------------------------------------------------"""
 
-def close(device_handle):
+def close(device_data):
     """
         close a specific device
     """
-    dwf.FDwfDeviceClose(device_handle)
+    dwf.FDwfDeviceClose(device_data.handle)
+    data.handle = ctypes.c_int(0)
+    data.name = ""
     return

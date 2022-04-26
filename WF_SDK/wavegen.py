@@ -41,11 +41,11 @@ class function:
 
 """-----------------------------------------------------------------------"""
 
-def generate(device_handle, channel, function, offset, frequency=1e03, amplitude=1, symmetry=50, wait=0, run_time=0, repeat=0, data=[]):
+def generate(device_data, channel, function, offset, frequency=1e03, amplitude=1, symmetry=50, wait=0, run_time=0, repeat=0, data=[]):
     """
         generate an analog signal
 
-        parameters: - device handle
+        parameters: - device data
                     - the selected wavegen channel (1-2)
                     - function - possible: custom, sine, square, triangle, noise, ds, pulse, trapezium, sine_power, ramp_up, ramp_down
                     - offset voltage in Volts
@@ -59,10 +59,10 @@ def generate(device_handle, channel, function, offset, frequency=1e03, amplitude
     """
     # enable channel
     channel = ctypes.c_int(channel - 1)
-    dwf.FDwfAnalogOutNodeEnableSet(device_handle, channel, constants.AnalogOutNodeCarrier, ctypes.c_bool(True))
+    dwf.FDwfAnalogOutNodeEnableSet(device_data.handle, channel, constants.AnalogOutNodeCarrier, ctypes.c_bool(True))
     
     # set function type
-    dwf.FDwfAnalogOutNodeFunctionSet(device_handle, channel, constants.AnalogOutNodeCarrier, function)
+    dwf.FDwfAnalogOutNodeFunctionSet(device_data.handle, channel, constants.AnalogOutNodeCarrier, function)
     
     # load data if the function type is custom
     if function == constants.funcCustom:
@@ -70,38 +70,38 @@ def generate(device_handle, channel, function, offset, frequency=1e03, amplitude
         buffer = (ctypes.c_double * data_length)()
         for index in range(0, len(buffer)):
             buffer[index] = ctypes.c_double(data[index])
-        dwf.FDwfAnalogOutNodeDataSet(device_handle, channel, constants.AnalogOutNodeCarrier, buffer, ctypes.c_int(data_length))
+        dwf.FDwfAnalogOutNodeDataSet(device_data.handle, channel, constants.AnalogOutNodeCarrier, buffer, ctypes.c_int(data_length))
     
     # set frequency
-    dwf.FDwfAnalogOutNodeFrequencySet(device_handle, channel, constants.AnalogOutNodeCarrier, ctypes.c_double(frequency))
+    dwf.FDwfAnalogOutNodeFrequencySet(device_data.handle, channel, constants.AnalogOutNodeCarrier, ctypes.c_double(frequency))
     
     # set amplitude or DC voltage
-    dwf.FDwfAnalogOutNodeAmplitudeSet(device_handle, channel, constants.AnalogOutNodeCarrier, ctypes.c_double(amplitude))
+    dwf.FDwfAnalogOutNodeAmplitudeSet(device_data.handle, channel, constants.AnalogOutNodeCarrier, ctypes.c_double(amplitude))
     
     # set offset
-    dwf.FDwfAnalogOutNodeOffsetSet(device_handle, channel, constants.AnalogOutNodeCarrier, ctypes.c_double(offset))
+    dwf.FDwfAnalogOutNodeOffsetSet(device_data.handle, channel, constants.AnalogOutNodeCarrier, ctypes.c_double(offset))
     
     # set symmetry
-    dwf.FDwfAnalogOutNodeSymmetrySet(device_handle, channel, constants.AnalogOutNodeCarrier, ctypes.c_double(symmetry))
+    dwf.FDwfAnalogOutNodeSymmetrySet(device_data.handle, channel, constants.AnalogOutNodeCarrier, ctypes.c_double(symmetry))
     
     # set running time limit
-    dwf.FDwfAnalogOutRunSet(device_handle, channel, ctypes.c_double(run_time))
+    dwf.FDwfAnalogOutRunSet(device_data.handle, channel, ctypes.c_double(run_time))
     
     # set wait time before start
-    dwf.FDwfAnalogOutWaitSet(device_handle, channel, ctypes.c_double(wait))
+    dwf.FDwfAnalogOutWaitSet(device_data.handle, channel, ctypes.c_double(wait))
     
     # set number of repeating cycles
-    dwf.FDwfAnalogOutRepeatSet(device_handle, channel, ctypes.c_int(repeat))
+    dwf.FDwfAnalogOutRepeatSet(device_data.handle, channel, ctypes.c_int(repeat))
     
     # start
-    dwf.FDwfAnalogOutConfigure(device_handle, channel, ctypes.c_bool(True))
+    dwf.FDwfAnalogOutConfigure(device_data.handle, channel, ctypes.c_bool(True))
     return
 
 """-----------------------------------------------------------------------"""
 
-def close(device_handle):
+def close(device_data):
     """
         reset the wavegen
     """
-    dwf.FDwfAnalogOutReset(device_handle)
+    dwf.FDwfAnalogOutReset(device_data.handle)
     return

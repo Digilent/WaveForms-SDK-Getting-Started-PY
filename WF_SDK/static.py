@@ -25,17 +25,17 @@ import dwfconstants as constants
 
 """-----------------------------------------------------------------------"""
 
-def set_mode(device_handle, channel, output):
+def set_mode(device_data, channel, output):
     """
         set a DIO line as input, or as output
 
-        parameters: - device handle
+        parameters: - device data
                     - selected DIO channel number
                     - True means output, False means input
     """
     # load current state of the output enable buffer
     mask = ctypes.c_uint16()
-    dwf.FDwfDigitalIOOutputEnableGet(device_handle, ctypes.byref(mask))
+    dwf.FDwfDigitalIOOutputEnableGet(device_data.handle, ctypes.byref(mask))
     
     # convert mask to list
     mask = list(bin(mask.value)[2:].zfill(16))
@@ -51,26 +51,26 @@ def set_mode(device_handle, channel, output):
     mask = int(mask, 2)
     
     # set the pin to output
-    dwf.FDwfDigitalIOOutputEnableSet(device_handle, ctypes.c_int(mask))
+    dwf.FDwfDigitalIOOutputEnableSet(device_data.handle, ctypes.c_int(mask))
     return
 
 """-----------------------------------------------------------------------"""
 
-def get_state(device_handle, channel):
+def get_state(device_data, channel):
     """
         get the state of a DIO line
 
-        parameters: - device handle
+        parameters: - device data
                     - selected DIO channel number
 
         returns:    - True if the channel is HIGH, or False, if the channel is LOW
     """
     # load internal buffer with current state of the pins
-    dwf.FDwfDigitalIOStatus(device_handle)
+    dwf.FDwfDigitalIOStatus(device_data.handle)
     
     # get the current state of the pins
     data = ctypes.c_uint32()  # variable for this current state
-    dwf.FDwfDigitalIOInputStatus(device_handle, ctypes.byref(data))
+    dwf.FDwfDigitalIOInputStatus(device_data.handle, ctypes.byref(data))
     
     # convert the state to a 16 character binary string
     data = list(bin(data.value)[2:].zfill(16))
@@ -84,17 +84,17 @@ def get_state(device_handle, channel):
 
 """-----------------------------------------------------------------------"""
 
-def set_state(device_handle, channel, state):
+def set_state(device_data, channel, state):
     """
         set a DIO line as input, or as output
 
-        parameters: - device handle
+        parameters: - device data
                     - selected DIO channel number
                     - True means HIGH, False means LOW
     """
     # load current state of the output state buffer
     mask = ctypes.c_uint16()
-    dwf.FDwfDigitalIOOutputGet(device_handle, ctypes.byref(mask))
+    dwf.FDwfDigitalIOOutputGet(device_data.handle, ctypes.byref(mask))
     
     # convert mask to list
     mask = list(bin(mask.value)[2:].zfill(16))
@@ -110,16 +110,16 @@ def set_state(device_handle, channel, state):
     mask = int(mask, 2)
     
     # set the pin state
-    dwf.FDwfDigitalIOOutputSet(device_handle, ctypes.c_int(mask))
+    dwf.FDwfDigitalIOOutputSet(device_data.handle, ctypes.c_int(mask))
     return
 
 """-----------------------------------------------------------------------"""
 
-def set_current(device_handle, current):
+def set_current(device_data, current):
     """
         limit the output current of the DIO lines
 
-        parameters: - device handle
+        parameters: - device data
                     - current limit in mA: possible values are 2, 4, 6, 8, 12 and 16mA
     """
     # clamp current
@@ -139,16 +139,16 @@ def set_current(device_handle, current):
         current = 16
 
     # set limit  
-    dwf.FDwfAnalogIOChannelNodeSet(device_handle, ctypes.c_int(0), ctypes.c_int(4), ctypes.c_double(current))
+    dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(0), ctypes.c_int(4), ctypes.c_double(current))
     return
 
 """-----------------------------------------------------------------------"""
 
-def set_pull(device_handle, channel, direction):
+def set_pull(device_data, channel, direction):
     """
         pull a DIO line up, or down
 
-        parameters: - device handle
+        parameters: - device data
                     - selected DIO channel number between 0-15
                     - direction: True means HIGH, False means LOW, None means idle
     """
@@ -163,7 +163,7 @@ def set_pull(device_handle, channel, direction):
 
     # get pull enable mask
     mask = ctypes.c_uint16()
-    dwf.FDwfAnalogIOChannelNodeGet(device_handle, ctypes.c_int(0), ctypes.c_int(2), ctypes.byref(mask))
+    dwf.FDwfAnalogIOChannelNodeGet(device_data.handle, ctypes.c_int(0), ctypes.c_int(2), ctypes.byref(mask))
 
     # convert mask to list
     mask = list(bin(mask.value)[2:].zfill(16))
@@ -179,13 +179,13 @@ def set_pull(device_handle, channel, direction):
     mask = int(mask, 2)
 
     # set pull enable mask
-    dwf.FDwfAnalogIOChannelNodeSet(device_handle, ctypes.c_int(0), ctypes.c_int(2), ctypes.c_int(mask))
+    dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(0), ctypes.c_int(2), ctypes.c_int(mask))
     
     # set direction if necessary
     if direction.value != 0.5:
         # get direction mask
         mask = ctypes.c_uint16()
-        dwf.FDwfAnalogIOChannelNodeGet(device_handle, ctypes.c_int(0), ctypes.c_int(3), ctypes.byref(mask))
+        dwf.FDwfAnalogIOChannelNodeGet(device_data.handle, ctypes.c_int(0), ctypes.c_int(3), ctypes.byref(mask))
 
         # convert mask to list
         mask = list(bin(mask.value)[2:].zfill(16))
@@ -201,15 +201,15 @@ def set_pull(device_handle, channel, direction):
         mask = int(mask, 2)
 
         # set direction mask
-        dwf.FDwfAnalogIOChannelNodeSet(device_handle, ctypes.c_int(0), ctypes.c_int(3), ctypes.c_int(mask))
+        dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(0), ctypes.c_int(3), ctypes.c_int(mask))
 
     return
 
 """-----------------------------------------------------------------------"""
 
-def close(device_handle):
+def close(device_data):
     """
         reset the instrument
     """
-    dwf.FDwfDigitalIOReset(device_handle)
+    dwf.FDwfDigitalIOReset(device_data.handle)
     return

@@ -42,7 +42,7 @@ class trigger_source:
 
 """-----------------------------------------------------------------------"""
 
-def generate(device_handle, channel, function, frequency, duty_cycle=50, data=[], wait=0, repeat=0, trigger_enabled=False, trigger_source=trigger_source.none, trigger_edge_rising=True):
+def generate(device_data, channel, function, frequency, duty_cycle=50, data=[], wait=0, repeat=0, trigger_enabled=False, trigger_source=trigger_source.none, trigger_edge_rising=True):
     """
         generate a logic signal
         
@@ -59,47 +59,47 @@ def generate(device_handle, channel, function, frequency, duty_cycle=50, data=[]
     """
     # get internal clock frequency
     internal_frequency = ctypes.c_double()
-    dwf.FDwfDigitalOutInternalClockInfo(device_handle, ctypes.byref(internal_frequency))
+    dwf.FDwfDigitalOutInternalClockInfo(device_data.handle, ctypes.byref(internal_frequency))
     
     # get counter value range
     counter_limit = ctypes.c_uint()
-    dwf.FDwfDigitalOutCounterInfo(device_handle, ctypes.c_int(0), ctypes.c_int(0), ctypes.byref(counter_limit))
+    dwf.FDwfDigitalOutCounterInfo(device_data.handle, ctypes.c_int(0), ctypes.c_int(0), ctypes.byref(counter_limit))
     
     # calculate the divider for the given signal frequency
     divider = int(-(-(internal_frequency.value / frequency) // counter_limit.value))
     
     # enable the respective channel
-    dwf.FDwfDigitalOutEnableSet(device_handle, ctypes.c_int(channel), ctypes.c_int(1))
+    dwf.FDwfDigitalOutEnableSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(1))
     
     # set output type
-    dwf.FDwfDigitalOutTypeSet(device_handle, ctypes.c_int(channel), function)
+    dwf.FDwfDigitalOutTypeSet(device_data.handle, ctypes.c_int(channel), function)
     
     # set frequency
-    dwf.FDwfDigitalOutDividerSet(device_handle, ctypes.c_int(channel), ctypes.c_int(divider))
+    dwf.FDwfDigitalOutDividerSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(divider))
     
     # set wait time
-    dwf.FDwfDigitalOutWaitSet(device_handle, ctypes.c_double(wait))
+    dwf.FDwfDigitalOutWaitSet(device_data.handle, ctypes.c_double(wait))
     
     # set repeat count
-    dwf.FDwfDigitalOutRepeatSet(device_handle, ctypes.c_int(repeat))
+    dwf.FDwfDigitalOutRepeatSet(device_data.handle, ctypes.c_int(repeat))
     
     # enable triggering
-    dwf.FDwfDigitalOutRepeatTriggerSet(device_handle, ctypes.c_int(trigger_enabled))
+    dwf.FDwfDigitalOutRepeatTriggerSet(device_data.handle, ctypes.c_int(trigger_enabled))
     
     if not trigger_enabled:
         # set trigger source
-        dwf.FDwfDigitalOutTriggerSourceSet(device_handle, trigger_source)
+        dwf.FDwfDigitalOutTriggerSourceSet(device_data.handle, trigger_source)
     
         # set trigger slope
         if trigger_edge_rising == True:
             # rising edge
-            dwf.FDwfDigitalOutTriggerSlopeSet(device_handle, constants.DwfTriggerSlopeRise)
+            dwf.FDwfDigitalOutTriggerSlopeSet(device_data.handle, constants.DwfTriggerSlopeRise)
         elif trigger_edge_rising == False:
             # falling edge
-            dwf.FDwfDigitalOutTriggerSlopeSet(device_handle, constants.DwfTriggerSlopeFall)
+            dwf.FDwfDigitalOutTriggerSlopeSet(device_data.handle, constants.DwfTriggerSlopeFall)
         elif trigger_edge_rising == None:
             # either edge
-            dwf.FDwfDigitalOutTriggerSlopeSet(device_handle, constants.DwfTriggerSlopeEither)
+            dwf.FDwfDigitalOutTriggerSlopeSet(device_data.handle, constants.DwfTriggerSlopeEither)
 
     # set PWM signal duty cycle
     if function == constants.DwfDigitalOutTypePulse:
@@ -108,7 +108,7 @@ def generate(device_handle, channel, function, frequency, duty_cycle=50, data=[]
         # calculate steps for low and high parts of the period
         high_steps = int(steps * duty_cycle / 100)
         low_steps = int(steps - high_steps)
-        dwf.FDwfDigitalOutCounterSet(device_handle, ctypes.c_int(channel), ctypes.c_int(low_steps), ctypes.c_int(high_steps))
+        dwf.FDwfDigitalOutCounterSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(low_steps), ctypes.c_int(high_steps))
     
     # load custom signal data
     elif function == constants.DwfDigitalOutTypeCustom:
@@ -119,17 +119,17 @@ def generate(device_handle, channel, function, frequency, duty_cycle=50, data=[]
                 buffer[index >> 3] |= 1 << (index & 7)
     
         # load data
-        dwf.FDwfDigitalOutDataSet(device_handle, ctypes.c_int(channel), ctypes.byref(buffer), ctypes.c_int(len(data)))
+        dwf.FDwfDigitalOutDataSet(device_data.handle, ctypes.c_int(channel), ctypes.byref(buffer), ctypes.c_int(len(data)))
     
     # start generating the signal
-    dwf.FDwfDigitalOutConfigure(device_handle, ctypes.c_int(True))
+    dwf.FDwfDigitalOutConfigure(device_data.handle, ctypes.c_int(True))
     return
 
 """-----------------------------------------------------------------------"""
 
-def close(device_handle):
+def close(device_data):
     """
         reset the instrument
     """
-    dwf.FDwfDigitalOutReset(device_handle)
+    dwf.FDwfDigitalOutReset(device_data.handle)
     return

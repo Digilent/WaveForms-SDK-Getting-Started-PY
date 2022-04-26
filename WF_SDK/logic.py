@@ -25,35 +25,35 @@ import dwfconstants as constants
 
 """-----------------------------------------------------------------------"""
 
-def open(device_handle, sampling_frequency=100e06, buffer_size=4096):
+def open(device_data, sampling_frequency=100e06, buffer_size=4096):
     """
         initialize the logic analyzer
 
-        parameters: - device handle
+        parameters: - device data
                     - sampling frequency in Hz, default is 100MHz
                     - buffer size, default is 4096
     """
     # get internal clock frequency
     internal_frequency = ctypes.c_double()
-    dwf.FDwfDigitalInInternalClockInfo(device_handle, ctypes.byref(internal_frequency))
+    dwf.FDwfDigitalInInternalClockInfo(device_data.handle, ctypes.byref(internal_frequency))
     
     # set clock frequency divider (needed for lower frequency input signals)
-    dwf.FDwfDigitalInDividerSet(device_handle, ctypes.c_int(int(internal_frequency.value / sampling_frequency)))
+    dwf.FDwfDigitalInDividerSet(device_data.handle, ctypes.c_int(int(internal_frequency.value / sampling_frequency)))
     
     # set 16-bit sample format
-    dwf.FDwfDigitalInSampleFormatSet(device_handle, ctypes.c_int(16))
+    dwf.FDwfDigitalInSampleFormatSet(device_data.handle, ctypes.c_int(16))
     
     # set buffer size
-    dwf.FDwfDigitalInBufferSizeSet(device_handle, ctypes.c_int(buffer_size))
+    dwf.FDwfDigitalInBufferSizeSet(device_data.handle, ctypes.c_int(buffer_size))
     return
 
 """-----------------------------------------------------------------------"""
 
-def trigger(device_handle, enable, channel, buffer_size=4096, position=0, timeout=0, rising_edge=True, length_min=0, length_max=20, count=1):
+def trigger(device_data, enable, channel, buffer_size=4096, position=0, timeout=0, rising_edge=True, length_min=0, length_max=20, count=1):
     """
         set up triggering
 
-        parameters: - device handle
+        parameters: - device data
                     - enable - True or False to enable, or disable triggering
                     - channel - the selected DIO line number to use as trigger source
                     - buffer size, the default is 4096
@@ -66,41 +66,41 @@ def trigger(device_handle, enable, channel, buffer_size=4096, position=0, timeou
     """
     # set trigger source to digital I/O lines, or turn it off
     if enable:
-        dwf.FDwfDigitalInTriggerSourceSet(device_handle, constants.trigsrcDetectorDigitalIn)
+        dwf.FDwfDigitalInTriggerSourceSet(device_data.handle, constants.trigsrcDetectorDigitalIn)
     else:
-        dwf.FDwfDigitalInTriggerSourceSet(device_handle, constants.trigsrcNone)
+        dwf.FDwfDigitalInTriggerSourceSet(device_data.handle, constants.trigsrcNone)
     
     # set starting position and prefill
     position = min(buffer_size, max(0, position))
-    dwf.FDwfDigitalInTriggerPositionSet(device_handle, ctypes.c_int(buffer_size - position))
-    dwf.FDwfDigitalInTriggerPrefillSet(device_handle, ctypes.c_int(position))
+    dwf.FDwfDigitalInTriggerPositionSet(device_data.handle, ctypes.c_int(buffer_size - position))
+    dwf.FDwfDigitalInTriggerPrefillSet(device_data.handle, ctypes.c_int(position))
 
     # set trigger condition
     channel = ctypes.c_int(1 << channel)
     if rising_edge:
-        dwf.FDwfDigitalInTriggerSet(device_handle, channel, ctypes.c_int(0), ctypes.c_int(0), ctypes.c_int(0))
-        dwf.FDwfDigitalInTriggerResetSet(device_handle, ctypes.c_int(0), ctypes.c_int(0), ctypes.c_int(0), channel)
+        dwf.FDwfDigitalInTriggerSet(device_data.handle, channel, ctypes.c_int(0), ctypes.c_int(0), ctypes.c_int(0))
+        dwf.FDwfDigitalInTriggerResetSet(device_data.handle, ctypes.c_int(0), ctypes.c_int(0), ctypes.c_int(0), channel)
     else:
-        dwf.FDwfDigitalInTriggerSet(device_handle, ctypes.c_int(0), channel, ctypes.c_int(0), ctypes.c_int(0))
-        dwf.FDwfDigitalInTriggerResetSet(device_handle, ctypes.c_int(0), ctypes.c_int(0), channel, ctypes.c_int(0))
+        dwf.FDwfDigitalInTriggerSet(device_data.handle, ctypes.c_int(0), channel, ctypes.c_int(0), ctypes.c_int(0))
+        dwf.FDwfDigitalInTriggerResetSet(device_data.handle, ctypes.c_int(0), ctypes.c_int(0), channel, ctypes.c_int(0))
     
     # set auto triggering
-    dwf.FDwfDigitalInTriggerAutoTimeoutSet(device_handle, ctypes.c_double(timeout))
+    dwf.FDwfDigitalInTriggerAutoTimeoutSet(device_data.handle, ctypes.c_double(timeout))
     
     # set sequence length to activate trigger
-    dwf.FDwfDigitalInTriggerLengthSet(device_handle, ctypes.c_double(length_min), ctypes.c_double(length_max), ctypes.c_int(0))
+    dwf.FDwfDigitalInTriggerLengthSet(device_data.handle, ctypes.c_double(length_min), ctypes.c_double(length_max), ctypes.c_int(0))
 
     # set event counter
-    dwf.FDwfDigitalInTriggerCountSet(device_handle, ctypes.c_int(count), ctypes.c_int(0))
+    dwf.FDwfDigitalInTriggerCountSet(device_data.handle, ctypes.c_int(count), ctypes.c_int(0))
     return
 
 """-----------------------------------------------------------------------"""
 
-def record(device_handle, channel, sampling_frequency=100e06, buffer_size=4096):
+def record(device_data, channel, sampling_frequency=100e06, buffer_size=4096):
     """
         initialize the logic analyzer
 
-        parameters: - device handle
+        parameters: - device data
                     - channel - the selected DIO line number
                     - sampling frequency in Hz, default is 100MHz
                     - buffer size, default is 4096
@@ -109,12 +109,12 @@ def record(device_handle, channel, sampling_frequency=100e06, buffer_size=4096):
                     - time - a list with the time moments for each value in seconds (with the same index as "buffer")
     """
     # set up the instrument
-    dwf.FDwfDigitalInConfigure(device_handle, ctypes.c_bool(False), ctypes.c_bool(True))
+    dwf.FDwfDigitalInConfigure(device_data.handle, ctypes.c_bool(False), ctypes.c_bool(True))
     
     # read data to an internal buffer
     while True:
         status = ctypes.c_byte()    # variable to store buffer status
-        dwf.FDwfDigitalInStatus(device_handle, ctypes.c_bool(True), ctypes.byref(status))
+        dwf.FDwfDigitalInStatus(device_data.handle, ctypes.c_bool(True), ctypes.byref(status))
     
         if status.value == constants.stsDone.value:
             # exit loop when finished
@@ -122,7 +122,7 @@ def record(device_handle, channel, sampling_frequency=100e06, buffer_size=4096):
     
     # get samples
     buffer = (ctypes.c_uint16 * buffer_size)()
-    dwf.FDwfDigitalInStatusData(device_handle, buffer, ctypes.c_int(2 * buffer_size))
+    dwf.FDwfDigitalInStatusData(device_data.handle, buffer, ctypes.c_int(2 * buffer_size))
     
     # convert buffer to list of lists of integers
     buffer = [int(element) for element in buffer]
@@ -141,9 +141,9 @@ def record(device_handle, channel, sampling_frequency=100e06, buffer_size=4096):
 
 """-----------------------------------------------------------------------"""
 
-def close(device_handle):
+def close(device_data):
     """
         reset the instrument
     """
-    dwf.FDwfDigitalInReset(device_handle)
+    dwf.FDwfDigitalInReset(device_data.handle)
     return
