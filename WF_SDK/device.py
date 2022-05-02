@@ -55,7 +55,9 @@ def open():
 
     # connect to the first available device
     dwf.FDwfDeviceOpen(ctypes.c_int(-1), ctypes.byref(device_handle))
-    return device_handle
+    data.handle = device_handle
+    data.name = device_name
+    return data
 """
 
 """-----------------------------------------------------------------------"""
