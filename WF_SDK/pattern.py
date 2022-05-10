@@ -77,7 +77,10 @@ def generate(device_data, channel, function, frequency, duty_cycle=50, data=[], 
     dwf.FDwfDigitalOutCounterInfo(device_data.handle, ctypes.c_int(0), ctypes.c_int(0), ctypes.byref(counter_limit))
     
     # calculate the divider for the given signal frequency
-    divider = int(-(-(internal_frequency.value / frequency) // counter_limit.value))
+    if function == constants.DwfDigitalOutTypePulse:
+        divider = int(-(-(internal_frequency.value / frequency) // counter_limit.value))
+    else:
+        divider = int(internal_frequency.value / frequency)
     
     # enable the respective channel
     dwf.FDwfDigitalOutEnableSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(1))
@@ -105,7 +108,7 @@ def generate(device_data, channel, function, frequency, duty_cycle=50, data=[], 
     # enable triggering
     dwf.FDwfDigitalOutRepeatTriggerSet(device_data.handle, ctypes.c_int(trigger_enabled))
     
-    if not trigger_enabled:
+    if trigger_enabled:
         # set trigger source
         dwf.FDwfDigitalOutTriggerSourceSet(device_data.handle, trigger_source)
     
