@@ -155,3 +155,17 @@ def close(device_data):
     """
     dwf.FDwfDigitalOutReset(device_data.handle)
     return
+
+"""-----------------------------------------------------------------------"""
+
+def _enable_(device_data, channel):
+    """ enables a digital output channel """
+    dwf.FDwfDigitalOutEnableSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(1))
+    return
+
+"""-----------------------------------------------------------------------"""
+
+def _disable_(device_data, channel):
+    """ disables a digital output channel """
+    dwf.FDwfDigitalOutEnableSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(0))
+    return
