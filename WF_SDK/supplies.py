@@ -184,28 +184,28 @@ def switch(device_data, supplies_state):
     if device_data.name == "Analog Discovery":
         # switch fixed supplies on AD
         supply_state = supplies_state.state or supplies_state.positive_state
-        _switch_fixed_(device_data.handle, supplies_state.master_state, supply_state, supplies_state.negative_state)
+        _switch_fixed_(device_data, supplies_state.master_state, supply_state, supplies_state.negative_state)
 
     elif device_data.name == "Analog Discovery 2" or device_data.name == "Analog Discovery Studio":
         # switch variable supplies on AD2
         supply_state = supplies_state.state or supplies_state.positive_state
         supply_voltage = supplies_state.voltage + supplies_state.positive_voltage
-        _switch_variable_(device_data.handle, supplies_state.master_state, supply_state, supplies_state.negative_state, supply_voltage, supplies_state.negative_voltage)
+        _switch_variable_(device_data, supplies_state.master_state, supply_state, supplies_state.negative_state, supply_voltage, supplies_state.negative_voltage)
 
     elif device_data.name == "Digital Discovery" or device_data.name == "Analog Discovery Pro 3X50":
         # switch the digital supply on DD, or ADP3x50
         supply_state = supplies_state.master_state and (supplies_state.state or supplies_state.positive_state)
         supply_voltage = supplies_state.voltage + supplies_state.positive_voltage
-        _switch_digital_(device_data.handle, supply_state, supply_voltage)
+        _switch_digital_(device_data, supply_state, supply_voltage)
 
     elif device_data.name == "Analog Discovery Pro 5250":
         # switch the 6V supply on ADP5250
         supply_state = supplies_state.master_state and supplies_state.state
-        _switch_6V_(device_data.handle, supply_state, supplies_state.voltage, supplies_state.current)
+        _switch_6V_(device_data, supply_state, supplies_state.voltage, supplies_state.current)
         # switch the 25V supplies on ADP5250
         supply_positive_state = supplies_state.master_state and supplies_state.positive_state
         supply_negative_state = supplies_state.master_state and supplies_state.negative_state
-        _switch_25V_(device_data.handle, supply_positive_state, supply_negative_state, supplies_state.positive_voltage, supplies_state.negative_voltage, supplies_state.positive_current, supplies_state.negative_current)
+        _switch_25V_(device_data, supply_positive_state, supply_negative_state, supplies_state.positive_voltage, supplies_state.negative_voltage, supplies_state.positive_current, supplies_state.negative_current)
     return
 
 """-----------------------------------------------------------------------"""
