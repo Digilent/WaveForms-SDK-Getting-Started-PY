@@ -49,7 +49,7 @@ def open(device_data, sampling_frequency=100e06, buffer_size=4096):
 
 """-----------------------------------------------------------------------"""
 
-def trigger(device_data, enable, channel, buffer_size=4096, position=0, timeout=0, rising_edge=True, length_min=0, length_max=20, count=1):
+def trigger(device_data, enable, channel, buffer_size=4096, position=0, timeout=0, rising_edge=True, length_min=0, length_max=20, count=0):
     """
         set up triggering
 
@@ -62,7 +62,7 @@ def trigger(device_data, enable, channel, buffer_size=4096, position=0, timeout=
                     - rising_edge - set True for rising edge, False for falling edge, the default is rising edge
                     - length_min - trigger sequence minimum time in seconds, the default is 0
                     - length_max - trigger sequence maximum time in seconds, the default is 20
-                    - count - nt count, the default is 1
+                    - count - instance count, the default is 0 (immediate)
     """
     # set trigger source to digital I/O lines, or turn it off
     if enable:
@@ -77,7 +77,7 @@ def trigger(device_data, enable, channel, buffer_size=4096, position=0, timeout=
 
     # set trigger condition
     channel = ctypes.c_int(1 << channel)
-    if rising_edge:
+    if not rising_edge:
         dwf.FDwfDigitalInTriggerSet(device_data.handle, channel, ctypes.c_int(0), ctypes.c_int(0), ctypes.c_int(0))
         dwf.FDwfDigitalInTriggerResetSet(device_data.handle, ctypes.c_int(0), ctypes.c_int(0), ctypes.c_int(0), channel)
     else:
