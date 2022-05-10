@@ -42,7 +42,16 @@ class trigger_source:
 
 """-----------------------------------------------------------------------"""
 
-def generate(device_data, channel, function, frequency, duty_cycle=50, data=[], wait=0, repeat=0, trigger_enabled=False, trigger_source=trigger_source.none, trigger_edge_rising=True):
+class idle_state:
+    """ channel idle states """
+    initial = constants.DwfDigitalOutIdleInit
+    high = constants.DwfDigitalOutIdleHigh
+    low = constants.DwfDigitalOutIdleLow
+    high_impedance = constants.DwfDigitalOutIdleZet
+
+"""-----------------------------------------------------------------------"""
+
+def generate(device_data, channel, function, frequency, duty_cycle=50, data=[], wait=0, repeat=0, idle=idle_state.initial, trigger_enabled=False, trigger_source=trigger_source.none, trigger_edge_rising=True):
     """
         generate a logic signal
         
@@ -53,6 +62,7 @@ def generate(device_data, channel, function, frequency, duty_cycle=50, data=[], 
                     - data list, used only if function = custom, default is empty
                     - wait time in seconds, default is 0 seconds
                     - repeat count, default is infinite (0)
+                    - idle - possible: initial, high, low, high_impedance, default = initial
                     - trigger_enabled - include/exclude trigger from repeat cycle
                     - trigger_source - possible: none, analog, digital, external[1-4]
                     - trigger_edge_rising - True means rising, False means falling, None means either, default is rising
@@ -82,6 +92,9 @@ def generate(device_data, channel, function, frequency, duty_cycle=50, data=[], 
     
     # set repeat count
     dwf.FDwfDigitalOutRepeatSet(device_data.handle, ctypes.c_int(repeat))
+
+    # set idle state
+    dwf.FDwfDigitalOutIdleSet(device_data.handle, ctypes.c_int(channel), idle)
     
     # enable triggering
     dwf.FDwfDigitalOutRepeatTriggerSet(device_data.handle, ctypes.c_int(trigger_enabled))
