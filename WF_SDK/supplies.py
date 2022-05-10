@@ -25,7 +25,22 @@ import dwfconstants as constants
 
 """-----------------------------------------------------------------------"""
 
-def switch_fixed(device_data, master_state, positive_state, negative_state):
+class state:
+    """ power supply parameters """
+    master_state = False    # master switch
+    state = False           # digital/6V/positive supply state
+    positive_state = False  # positive supply switch
+    negative_state = False  # negative supply switch
+    positive_voltage = 0    # positive supply voltage
+    negative_voltage = 0    # negative supply voltage
+    voltage = 0             # digital/positive supply voltage
+    positive_current = 0    # positive supply current
+    negative_current = 0    # negative supply current
+    current = 0             # digital/6V supply current
+
+"""-----------------------------------------------------------------------"""
+
+def _switch_fixed_(device_data, master_state, positive_state, negative_state):
     """
         turn the power supplies on/off
 
@@ -46,7 +61,7 @@ def switch_fixed(device_data, master_state, positive_state, negative_state):
 
 """-----------------------------------------------------------------------"""
 
-def switch_variable(device_data, master_state, positive_state, negative_state, positive_voltage, negative_voltage):
+def _switch_variable_(device_data, master_state, positive_state, negative_state, positive_voltage, negative_voltage):
     """
         turn the power supplies on/off
 
@@ -77,7 +92,7 @@ def switch_variable(device_data, master_state, positive_state, negative_state, p
 
 """-----------------------------------------------------------------------"""
 
-def switch_digital(device_data, master_state, voltage):
+def _switch_digital_(device_data, master_state, voltage):
     """
         turn the power supplies on/off
 
@@ -95,7 +110,7 @@ def switch_digital(device_data, master_state, voltage):
 
 """-----------------------------------------------------------------------"""
 
-def switch_6V(device_data, master_state, voltage, current=1):
+def _switch_6V_(device_data, master_state, voltage, current=1):
     """
         turn the 6V supply on the ADP5250 on/off
 
@@ -118,7 +133,7 @@ def switch_6V(device_data, master_state, voltage, current=1):
 
 """-----------------------------------------------------------------------"""
 
-def switch_25V(device_data, positive_state, negative_state, positive_voltage, negative_voltage, positive_current=0.5, negative_current=-0.5):
+def _switch_25V_(device_data, positive_state, negative_state, positive_voltage, negative_voltage, positive_current=0.5, negative_current=-0.5):
     """
         turn the 25V power supplies on/off on the ADP5250
 
@@ -165,95 +180,33 @@ def switch(device_data, supplies_state):
                         - state and/or positive_state and negative_state
                         - voltage and/or positive_voltage and negative_voltage
                         - current and/or positive_current and negative_current
-
-        returns:    - True on success, False on error
     """
     if device_data.name == "Analog Discovery":
         # switch fixed supplies on AD
-        try:
-            # switch both supplies
-            switch_fixed(device_data.handle, supplies_state.master_state, supplies_state.positive_state, supplies_state.negative_state)
-            return True
-        except:
-            try:
-                # switch only the positive supply
-                switch_fixed(device_data.handle, supplies_state.master_state, supplies_state.state, False)
-                return True
-            except:
-                return False
+        supply_state = supplies_state.state or supplies_state.positive_state
+        _switch_fixed_(device_data.handle, supplies_state.master_state, supply_state, supplies_state.negative_state)
 
     elif device_data.name == "Analog Discovery 2" or device_data.name == "Analog Discovery Studio":
         # switch variable supplies on AD2
-        try:
-            # switch both supplies
-            switch_variable(device_data.handle, supplies_state.master_state, supplies_state.positive_state, supplies_state.negative_state, supplies_state.positive_voltage, supplies_state.negative_voltage)
-            return True
-        except:
-            # switch only the positive supply
-            try:
-                switch_variable(device_data.handle, supplies_state.master_state, supplies_state.state, False, supplies_state.voltage, 0)
-                return True
-            except:
-                return False
+        supply_state = supplies_state.state or supplies_state.positive_state
+        supply_voltage = supplies_state.voltage + supplies_state.positive_voltage
+        _switch_variable_(device_data.handle, supplies_state.master_state, supply_state, supplies_state.negative_state, supply_voltage, supplies_state.negative_voltage)
 
     elif device_data.name == "Digital Discovery" or device_data.name == "Analog Discovery Pro 3X50":
         # switch the digital supply on DD, or ADP3x50
-        try:
-            if supplies_state.master_state == True:
-                switch_digital(device_data.handle, supplies_state.state, supplies_state.voltage)
-            elif supplies_state.master_state == False:
-                switch_digital(device_data.handle, False, 3.3)
-            return True
-        except:
-            return False
+        supply_state = supplies_state.master_state and (supplies_state.state or supplies_state.positive_state)
+        supply_voltage = supplies_state.voltage + supplies_state.positive_voltage
+        _switch_digital_(device_data.handle, supply_state, supply_voltage)
 
     elif device_data.name == "Analog Discovery Pro 5250":
-        error_flag = False
-
         # switch the 6V supply on ADP5250
-        try:
-            if supplies_state.master_state == True:
-                try:
-                    # try to limit the current
-                    switch_6V(device_data.handle, supplies_state.state, supplies_state.voltage, supplies_state.current)
-                except:
-                    try:
-                        # try without current limitation
-                        switch_6V(device_data.handle, supplies_state.state, supplies_state.voltage)
-                    except:
-                        error_flag = True
-            elif supplies_state.master_state == False:
-                switch_6V(device_data.handle, False, 0, 1)
-        except:
-            error_flag = True
-        
+        supply_state = supplies_state.master_state and supplies_state.state
+        _switch_6V_(device_data.handle, supply_state, supplies_state.voltage, supplies_state.current)
         # switch the 25V supplies on ADP5250
-        try:
-            if supplies_state.master_state == True:
-                try:
-                   # try both suplpies with current limitation
-                   switch_25V(device_data.handle, supplies_state.positive_state, supplies_state.negative_state, supplies_state.positive_voltage, supplies_state.negative_voltage, supplies_state.positive_current, supplies_state.negative_current)
-                   return True
-                except:
-                    try:
-                        # try both supplies without current limitation
-                        switch_25V(device_data.handle, supplies_state.positive_state, supplies_state.negative_state, supplies_state.positive_voltage, supplies_state.negative_voltage)
-                        return True
-                    except:
-                        if error_flag:
-                            return False
-                        else:
-                            return True
-            elif supplies_state.master_state == False:
-                switch_25V(device_data.handle, False, False, 0, 0, 0.5, -0.5)
-                return True
-        except:
-            if error_flag:
-                return False
-            else:
-                return True
-
-    return False
+        supply_positive_state = supplies_state.master_state and supplies_state.positive_state
+        supply_negative_state = supplies_state.master_state and supplies_state.negative_state
+        _switch_25V_(device_data.handle, supply_positive_state, supply_negative_state, supplies_state.positive_voltage, supplies_state.negative_voltage, supplies_state.positive_current, supplies_state.negative_current)
+    return
 
 """-----------------------------------------------------------------------"""
 

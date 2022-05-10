@@ -18,10 +18,10 @@ CLS_cs = 0
 ALS_cs = 1
 
 # start the power supplies
-class supplies_state:
-    master_state = True
-    state = True
-    voltage = 3.3
+supplies_state = supplies.state()
+supplies_state.master_state = True
+supplies_state.state = True
+supplies_state.voltage = 3.3
 supplies.switch(device_data, supplies_state)
 
 # initialize the spi interface on DIO0, DIO1, DIO2, DIO3 and DIO4

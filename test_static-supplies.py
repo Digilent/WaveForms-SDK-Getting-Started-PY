@@ -13,10 +13,10 @@ device.check_error(device_data)
 """-----------------------------------"""
 
 # start the positive supply
-class supplies_state:
-    master_state = True
-    state = True
-    voltage = 3.3
+supplies_state = supplies.state()
+supplies_state.master_state = True
+supplies_state.state = True
+supplies_state.voltage = 3.3
 supplies.switch(device_data, supplies_state)
 
 # set maximum current

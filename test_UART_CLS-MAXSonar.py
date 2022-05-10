@@ -20,10 +20,10 @@ reset = 2
 timeout = 1000
 
 # start the power supplies
-class supplies_state:
-    master_state = True
-    state = True
-    voltage = 3.3
+supplies_state = supplies.state()
+supplies_state.master_state = True
+supplies_state.state = True
+supplies_state.voltage = 3.3
 supplies.switch(device_data, supplies_state)
 sleep(0.1)    # delay
 
