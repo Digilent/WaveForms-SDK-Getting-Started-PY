@@ -1,4 +1,4 @@
-""" PATTERN GENERATOR CONTROL FUNCTIONS: generate, close """
+""" PATTERN GENERATOR CONTROL FUNCTIONS: generate, close, get_state """
 
 import ctypes                     # import the C compatible data types
 from sys import platform, path    # this is needed to check the OS type and get the PATH
@@ -155,3 +155,17 @@ def close(device_data):
     """
     dwf.FDwfDigitalOutReset(device_data.handle)
     return
+
+"""-----------------------------------------------------------------------"""
+
+def get_state(device_data):
+    """
+        returns True if the instrument is running and False otherwise
+    """
+    status = ctypes.c_byte()    # variable to store buffer status
+    dwf.FDwfDigitalOutStatus(device_data.handle, ctypes.c_bool(True), ctypes.byref(status))
+    # check status
+    if status == constants.DwfStateReady or status == constants.DwfStateDone:
+        return True
+    else:
+        return False
