@@ -25,6 +25,13 @@ import dwfconstants as constants
 
 """-----------------------------------------------------------------------"""
 
+class state:
+    """ stores the state of the instrument """
+    on = False
+    off = True
+
+"""-----------------------------------------------------------------------"""
+
 def open(device_data, rx, tx, baud_rate=9600, parity=None, data_bits=8, stop_bits=1):
     """
         initializes UART communication
@@ -70,6 +77,8 @@ def open(device_data, rx, tx, baud_rate=9600, parity=None, data_bits=8, stop_bit
     # dummy write
     dwf.FDwfDigitalUartTx(device_data.handle, dummy_buffer, ctypes.c_int(0))
     
+    state.on = True
+    state.off = False
     return
 
 """-----------------------------------------------------------------------"""
@@ -158,4 +167,6 @@ def close(device_data):
         reset the uart interface
     """
     dwf.FDwfDigitalUartReset(device_data.handle)
+    state.on = False
+    state.off = True
     return

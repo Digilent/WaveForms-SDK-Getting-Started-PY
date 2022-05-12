@@ -25,6 +25,19 @@ import dwfconstants as constants
 
 """-----------------------------------------------------------------------"""
 
+class data:
+    """ stores the sampling frequency and the buffer size """
+    sampling_frequency = 100e06
+    buffer_size = 4096
+
+class state:
+    """ stores the state of the instrument """
+    on = False
+    off = True
+    trigger = False
+
+"""-----------------------------------------------------------------------"""
+
 def open(device_data, sampling_frequency=100e06, buffer_size=4096):
     """
         initialize the logic analyzer
@@ -45,11 +58,15 @@ def open(device_data, sampling_frequency=100e06, buffer_size=4096):
     
     # set buffer size
     dwf.FDwfDigitalInBufferSizeSet(device_data.handle, ctypes.c_int(buffer_size))
+    data.sampling_frequency = sampling_frequency
+    data.buffer_size = buffer_size
+    state.on = True
+    state.off = False
     return
 
 """-----------------------------------------------------------------------"""
 
-def trigger(device_data, enable, channel, buffer_size=4096, position=0, timeout=0, rising_edge=True, length_min=0, length_max=20, count=0):
+def trigger(device_data, enable, channel, position=0, timeout=0, rising_edge=True, length_min=0, length_max=20, count=0):
     """
         set up triggering
 
@@ -67,12 +84,14 @@ def trigger(device_data, enable, channel, buffer_size=4096, position=0, timeout=
     # set trigger source to digital I/O lines, or turn it off
     if enable:
         dwf.FDwfDigitalInTriggerSourceSet(device_data.handle, constants.trigsrcDetectorDigitalIn)
+        state.trigger = True
     else:
         dwf.FDwfDigitalInTriggerSourceSet(device_data.handle, constants.trigsrcNone)
+        state.trigger = False
     
     # set starting position and prefill
-    position = min(buffer_size, max(0, position))
-    dwf.FDwfDigitalInTriggerPositionSet(device_data.handle, ctypes.c_int(buffer_size - position))
+    position = min(data.buffer_size, max(0, position))
+    dwf.FDwfDigitalInTriggerPositionSet(device_data.handle, ctypes.c_int(data.buffer_size - position))
     dwf.FDwfDigitalInTriggerPrefillSet(device_data.handle, ctypes.c_int(position))
 
     # set trigger condition
@@ -96,14 +115,12 @@ def trigger(device_data, enable, channel, buffer_size=4096, position=0, timeout=
 
 """-----------------------------------------------------------------------"""
 
-def record(device_data, channel, sampling_frequency=100e06, buffer_size=4096):
+def record(device_data, channel):
     """
         initialize the logic analyzer
 
         parameters: - device data
                     - channel - the selected DIO line number
-                    - sampling frequency in Hz, default is 100MHz
-                    - buffer size, default is 4096
 
         returns:    - buffer - a list with the recorded logic values
                     - time - a list with the time moments for each value in seconds (with the same index as "buffer")
@@ -121,19 +138,19 @@ def record(device_data, channel, sampling_frequency=100e06, buffer_size=4096):
             break
     
     # get samples
-    buffer = (ctypes.c_uint16 * buffer_size)()
-    dwf.FDwfDigitalInStatusData(device_data.handle, buffer, ctypes.c_int(2 * buffer_size))
+    buffer = (ctypes.c_uint16 * data.buffer_size)()
+    dwf.FDwfDigitalInStatusData(device_data.handle, buffer, ctypes.c_int(2 * data.buffer_size))
     
     # convert buffer to list of lists of integers
     buffer = [int(element) for element in buffer]
     result = [[] for _ in range(16)]
-    for data in buffer:
+    for point in buffer:
         for index in range(16):
-            result[index].append(data & (1 << index))
+            result[index].append(point & (1 << index))
     
     # calculate acquisition time
-    time = range(0, buffer_size)
-    time = [moment / sampling_frequency for moment in time]
+    time = range(0, data.buffer_size)
+    time = [moment / data.sampling_frequency for moment in time]
     
     # get channel specific data
     buffer = result[channel]
@@ -146,4 +163,7 @@ def close(device_data):
         reset the instrument
     """
     dwf.FDwfDigitalInReset(device_data.handle)
+    state.on = False
+    state.off = True
+    state.trigger = False
     return

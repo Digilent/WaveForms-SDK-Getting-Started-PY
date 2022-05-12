@@ -25,12 +25,21 @@ import dwfconstants as constants
 
 """-----------------------------------------------------------------------"""
 
+class state:
+    """ stores the state of the instrument """
+    on = False
+    off = True
+
+"""-----------------------------------------------------------------------"""
+
 def open(device_data):
     """
         initialize the digital multimeter
     """
     # enable the DMM
     dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(3), ctypes.c_int(0), ctypes.c_double(1.0))
+    state.on = True
+    state.off = False
     return
 
 """-----------------------------------------------------------------------"""
@@ -117,4 +126,6 @@ def close(device_data):
     dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(3), ctypes.c_int(0), ctypes.c_double(0))
     # reset the instrument
     dwf.FDwfAnalogIOReset(device_data.handle)
+    state.on = False
+    state.off = True
     return

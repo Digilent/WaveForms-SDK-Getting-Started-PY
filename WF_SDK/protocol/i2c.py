@@ -25,6 +25,13 @@ import dwfconstants as constants
 
 """-----------------------------------------------------------------------"""
 
+class state:
+    """ stores the state of the instrument """
+    on = False
+    off = True
+
+"""-----------------------------------------------------------------------"""
+
 def open(device_data, sda, scl, clk_rate=100e03, stretching=True):
     """
         initializes I2C communication
@@ -59,12 +66,13 @@ def open(device_data, sda, scl, clk_rate=100e03, stretching=True):
     if nak.value == 0:
         return "Error: I2C bus lockup"
 
-
     # write 0 bytes
     dwf.FDwfDigitalI2cWrite(device_data.handle, ctypes.c_int(0), ctypes.c_int(0), ctypes.c_int(0), ctypes.byref(nak))
     if nak.value != 0:
         return "NAK: index " + str(nak.value)
     
+    state.on = True
+    state.off = False
     return ""
 
 """-----------------------------------------------------------------------"""
@@ -244,4 +252,6 @@ def close(device_data):
         reset the i2c interface
     """
     dwf.FDwfDigitalI2cReset(device_data.handle)
+    state.on = False
+    state.off = True
     return

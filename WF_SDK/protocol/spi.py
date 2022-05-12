@@ -25,6 +25,13 @@ import dwfconstants as constants
 
 """-----------------------------------------------------------------------"""
 
+class state:
+    """ stores the state of the instrument """
+    on = False
+    off = True
+
+"""-----------------------------------------------------------------------"""
+
 def open(device_data, cs, sck, miso=None, mosi=None, clk_frequency=1e06, mode=0, order=True):
     """
         initializes SPI communication
@@ -75,6 +82,8 @@ def open(device_data, cs, sck, miso=None, mosi=None, clk_frequency=1e06, mode=0,
     # dummy write
     dwf.FDwfDigitalSpiWriteOne(device_data.handle, ctypes.c_int(1), ctypes.c_int(0), ctypes.c_int(0))
     
+    state.on = True
+    state.off = False
     return
 
 """-----------------------------------------------------------------------"""
@@ -298,4 +307,6 @@ def close(device_data):
         reset the spi interface
     """
     dwf.FDwfDigitalSpiReset(device_data.handle)
+    state.on = False
+    state.off = True
     return

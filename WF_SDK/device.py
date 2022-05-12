@@ -67,6 +67,12 @@ class data:
     handle = ctypes.c_int(0)
     name = ""
 
+class state:
+    """ stores the state of the device """
+    connected = False
+    disconnected = True
+    error = ""
+
 """-----------------------------------------------------------------------"""
 
 def open(device=None):
@@ -95,9 +101,10 @@ def open(device=None):
     # check for connected devices
     if device_count.value <= 0:
         if device_type.value == 0:
-            print("Error: There are no connected devices")
+            state.error = "Error: There are no connected devices"
         else:
-            print("Error: There is no " + device + " connected")
+            state.error = "Error: There is no " + device + " connected"
+        print(state.error)
         quit()
 
     # this is the device handle - it will be used by all functions to "address" the connected device
@@ -124,6 +131,8 @@ def open(device=None):
 
     data.handle = device_handle
     data.name = device_name
+    state.connected = True
+    state.disconnected = False
     return data
 
 """-----------------------------------------------------------------------"""
@@ -145,6 +154,9 @@ def check_error(device_data):
             dwf.FDwfGetLastErrorMsg(err_msg)                  # get the error message
             err_msg = err_msg.value.decode("ascii")           # format the message
             print("Error: " + err_msg)                        # display error message
+            state.error = err_msg
+            state.connected = False
+            state.disconnected = True
             quit()                                            # exit the program
     return
 
@@ -157,4 +169,6 @@ def close(device_data):
     dwf.FDwfDeviceClose(device_data.handle)
     data.handle = ctypes.c_int(0)
     data.name = ""
+    state.connected = False
+    state.disconnected = True
     return

@@ -25,6 +25,16 @@ import dwfconstants as constants
 
 """-----------------------------------------------------------------------"""
 
+class state:
+    """ stores the state of the instrument """
+    state = [None for _ in range(16)]
+    input = [True for _ in range(16)]
+    output = [False for _ in range(16)]
+    pull = [None for _ in range(16)]
+    current = None
+
+"""-----------------------------------------------------------------------"""
+
 def set_mode(device_data, channel, output):
     """
         set a DIO line as input, or as output
@@ -52,6 +62,10 @@ def set_mode(device_data, channel, output):
     
     # set the pin to output
     dwf.FDwfDigitalIOOutputEnableSet(device_data.handle, ctypes.c_int(mask))
+    state.input[channel] = not output
+    state.output[channel] = output
+    if not output:
+        state.state[channel] = None
     return
 
 """-----------------------------------------------------------------------"""
@@ -84,7 +98,7 @@ def get_state(device_data, channel):
 
 """-----------------------------------------------------------------------"""
 
-def set_state(device_data, channel, state):
+def set_state(device_data, channel, value):
     """
         set a DIO line as input, or as output
 
@@ -100,7 +114,7 @@ def set_state(device_data, channel, state):
     mask = list(bin(mask.value)[2:].zfill(16))
     
     # set bit in mask
-    if state:
+    if value:
         mask[15 - channel] = "1"
     else:
         mask[15 - channel] = "0"
@@ -111,6 +125,7 @@ def set_state(device_data, channel, state):
     
     # set the pin state
     dwf.FDwfDigitalIOOutputSet(device_data.handle, ctypes.c_int(mask))
+    state.state[channel] = value
     return
 
 """-----------------------------------------------------------------------"""
@@ -140,6 +155,7 @@ def set_current(device_data, current):
 
     # set limit  
     dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(0), ctypes.c_int(4), ctypes.c_double(current))
+    state.current = current
     return
 
 """-----------------------------------------------------------------------"""
@@ -153,6 +169,7 @@ def set_pull(device_data, channel, direction):
                     - direction: True means HIGH, False means LOW, None means idle
     """
     
+    state.pull[channel] = direction
     # encode direction
     if direction == True:
         direction = ctypes.c_double(1)
@@ -212,4 +229,9 @@ def close(device_data):
         reset the instrument
     """
     dwf.FDwfDigitalIOReset(device_data.handle)
+    state.state = [None for _ in range(16)]
+    state.input = [True for _ in range(16)]
+    state.output = [False for _ in range(16)]
+    state.pull = [None for _ in range(16)]
+    state.current = None
     return

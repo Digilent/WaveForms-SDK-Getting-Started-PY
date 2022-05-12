@@ -1,4 +1,4 @@
-""" PATTERN GENERATOR CONTROL FUNCTIONS: generate, close """
+""" PATTERN GENERATOR CONTROL FUNCTIONS: generate, close, enable, disable """
 
 import ctypes                     # import the C compatible data types
 from sys import platform, path    # this is needed to check the OS type and get the PATH
@@ -22,6 +22,14 @@ else:
 # import constants
 path.append(constants_path)
 import dwfconstants as constants
+
+"""-----------------------------------------------------------------------"""
+
+class state:
+    """ stores the state of the instrument """
+    on = False
+    off = True
+    channel = [False for _ in range(16)]
 
 """-----------------------------------------------------------------------"""
 
@@ -124,6 +132,9 @@ def generate(device_data, channel, function, frequency, duty_cycle=50, data=[], 
 
     # start generating the signal
     dwf.FDwfDigitalOutConfigure(device_data.handle, ctypes.c_int(True))
+    state.on = True
+    state.off = False
+    state.channel[channel] = True
     return
 
 """-----------------------------------------------------------------------"""
@@ -133,20 +144,27 @@ def close(device_data):
         reset the instrument
     """
     dwf.FDwfDigitalOutReset(device_data.handle)
+    state.on = False
+    state.off = True
+    state.channel = [False for _ in range(16)]
     return
 
 """-----------------------------------------------------------------------"""
 
-def _enable_(device_data, channel):
+def enable(device_data, channel):
     """ enables a digital output channel """
     dwf.FDwfDigitalOutEnableSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(1))
+    state.on = True
+    state.off = False
+    state.channel[channel] = True
     return
 
 """-----------------------------------------------------------------------"""
 
-def _disable_(device_data, channel):
+def disable(device_data, channel):
     """ disables a digital output channel """
     dwf.FDwfDigitalOutEnableSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(0))
+    state.channel[channel] = False
     return
 
 """-----------------------------------------------------------------------"""

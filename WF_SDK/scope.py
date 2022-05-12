@@ -25,6 +25,19 @@ import dwfconstants as constants
 
 """-----------------------------------------------------------------------"""
 
+class data:
+    """ stores the sampling frequency and the buffer size """
+    sampling_frequency = 20e06
+    buffer_size = 8192
+
+class state:
+    """ stores the state of the instrument """
+    on = False
+    off = False
+    trigger = False
+
+"""-----------------------------------------------------------------------"""
+
 class trigger_source:
     """ trigger source names """
     none = constants.trigsrcNone
@@ -61,6 +74,10 @@ def open(device_data, sampling_frequency=20e06, buffer_size=8192, offset=0, ampl
     
     # disable averaging (for more info check the documentation)
     dwf.FDwfAnalogInChannelFilterSet(device_data.handle, ctypes.c_int(-1), constants.filterDecimate)
+    data.sampling_frequency = sampling_frequency
+    data.buffer_size = buffer_size
+    state.on = True
+    state.off = False
     return
 
 """-----------------------------------------------------------------------"""
@@ -127,21 +144,21 @@ def trigger(device_data, enable, source=trigger_source.none, channel=1, timeout=
         else:
             # falling edge
             dwf.FDwfAnalogInTriggerConditionSet(device_data.handle, constants.trigcondFallingNegative)
+        state.trigger = True
     else:
         # turn off the trigger
         dwf.FDwfAnalogInTriggerSourceSet(device_data.handle, constants.trigsrcNone)
+        state.trigger = False
     return
 
 """-----------------------------------------------------------------------"""
 
-def record(device_data, channel, sampling_frequency=20e06, buffer_size=8192):
+def record(device_data, channel):
     """
         record an analog signal
 
         parameters: - device data
                     - the selected oscilloscope channel (1-2, or 1-4)
-                    - sampling frequency in Hz, default is 20MHz
-                    - buffer size, default is 8192
 
         returns:    - buffer - a list with the recorded voltages
                     - time - a list with the time moments for each voltage in seconds (with the same index as "buffer")
@@ -160,12 +177,12 @@ def record(device_data, channel, sampling_frequency=20e06, buffer_size=8192):
                 break
     
     # copy buffer
-    buffer = (ctypes.c_double * buffer_size)()   # create an empty buffer
-    dwf.FDwfAnalogInStatusData(device_data.handle, ctypes.c_int(channel - 1), buffer, ctypes.c_int(buffer_size))
+    buffer = (ctypes.c_double * data.buffer_size)()   # create an empty buffer
+    dwf.FDwfAnalogInStatusData(device_data.handle, ctypes.c_int(channel - 1), buffer, ctypes.c_int(data.buffer_size))
     
     # calculate aquisition time
-    time = range(0, buffer_size)
-    time = [moment / sampling_frequency for moment in time]
+    time = range(0, data.buffer_size)
+    time = [moment / data.sampling_frequency for moment in time]
     
     # convert into list
     buffer = [float(element) for element in buffer]
@@ -178,4 +195,7 @@ def close(device_data):
         reset the scope
     """
     dwf.FDwfAnalogInReset(device_data.handle)
+    state.on = False
+    state.off = True
+    state.trigger = False
     return

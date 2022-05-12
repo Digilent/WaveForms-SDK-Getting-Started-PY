@@ -1,4 +1,4 @@
-""" WAVEFORM GENERATOR CONTROL FUNCTIONS: generate, close """
+""" WAVEFORM GENERATOR CONTROL FUNCTIONS: generate, close, enable, disable """
 
 import ctypes                     # import the C compatible data types
 from sys import platform, path    # this is needed to check the OS type and get the PATH
@@ -22,6 +22,14 @@ else:
 # import constants
 path.append(constants_path)
 import dwfconstants as constants
+
+"""-----------------------------------------------------------------------"""
+
+class state:
+    """ stores the state of the instrument """
+    on = False
+    off = True
+    channel = [False, False]
 
 """-----------------------------------------------------------------------"""
 
@@ -95,13 +103,43 @@ def generate(device_data, channel, function, offset, frequency=1e03, amplitude=1
     
     # start
     dwf.FDwfAnalogOutConfigure(device_data.handle, channel, ctypes.c_bool(True))
+    state.on = True
+    state.off = False
+    state.channel[channel.value] = True
     return
 
 """-----------------------------------------------------------------------"""
 
-def close(device_data):
+def close(device_data, channel=0):
     """
-        reset the wavegen
+        reset a wavegen channel, or all channels (channel=0)
     """
-    dwf.FDwfAnalogOutReset(device_data.handle)
+    channel = ctypes.c_int(channel - 1)
+    dwf.FDwfAnalogOutReset(device_data.handle, channel)
+    state.on = False
+    state.off = False
+    if channel.value >= 0:
+        state.channel[channel.value] = False
+    else:
+        state.channel = [False, False]
+    return
+
+"""-----------------------------------------------------------------------"""
+
+def enable(device_data, channel):
+    """ enables an analog output channel """
+    channel = ctypes.c_int(channel - 1)
+    dwf.FDwfAnalogOutConfigure(device_data.handle, channel, ctypes.c_bool(True))
+    state.on = True
+    state.off = False
+    state.channel[channel.value] = True
+    return
+
+"""-----------------------------------------------------------------------"""
+
+def disable(device_data, channel):
+    """ disables an analog output channel """
+    channel = ctypes.c_int(channel - 1)
+    dwf.FDwfAnalogOutConfigure(device_data.handle, channel, ctypes.c_bool(False))
+    state.channel[channel.value] = False
     return

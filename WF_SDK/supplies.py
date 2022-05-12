@@ -25,12 +25,24 @@ import dwfconstants as constants
 
 """-----------------------------------------------------------------------"""
 
-class state:
+class data:
     """ power supply parameters """
     master_state = False    # master switch
     state = False           # digital/6V/positive supply state
     positive_state = False  # positive supply switch
     negative_state = False  # negative supply switch
+    positive_voltage = 0    # positive supply voltage
+    negative_voltage = 0    # negative supply voltage
+    voltage = 0             # digital/positive supply voltage
+    positive_current = 0    # positive supply current
+    negative_current = 0    # negative supply current
+    current = 0             # digital/6V supply current
+
+class state:
+    """ stores the state of the instrument """
+    on = False
+    off = True
+    type = ""
     positive_voltage = 0    # positive supply voltage
     negative_voltage = 0    # negative supply voltage
     voltage = 0             # digital/positive supply voltage
@@ -57,6 +69,11 @@ def _switch_fixed_(device_data, master_state, positive_state, negative_state):
     
     # start/stop the supplies - master switch
     dwf.FDwfAnalogIOEnableSet(device_data.handle, ctypes.c_int(master_state))
+    state.on = master_state or positive_state or negative_state
+    state.off = not state.on
+    state.positive_voltage = 5 if positive_state and master_state else 0
+    state.negative_voltage = -5 if negative_state and master_state else 0
+    state.type = "fixed"
     return
 
 """-----------------------------------------------------------------------"""
@@ -88,6 +105,11 @@ def _switch_variable_(device_data, master_state, positive_state, negative_state,
     
     # start/stop the supplies - master switch
     dwf.FDwfAnalogIOEnableSet(device_data.handle, ctypes.c_int(master_state))
+    state.on = master_state or positive_state or negative_state
+    state.off = not state.on
+    state.positive_voltage = positive_voltage if positive_state and master_state else 0
+    state.negative_voltage = negative_voltage if negative_state and master_state else 0
+    state.type = "variable"
     return
 
 """-----------------------------------------------------------------------"""
@@ -106,6 +128,10 @@ def _switch_digital_(device_data, master_state, voltage):
     
     # start/stop the supplies - master switch
     dwf.FDwfAnalogIOEnableSet(device_data.handle, ctypes.c_int(master_state))
+    state.on = master_state
+    state.off = not state.on
+    state.voltage = voltage if master_state else 0
+    state.type = "digital"
     return
 
 """-----------------------------------------------------------------------"""
@@ -129,6 +155,11 @@ def _switch_6V_(device_data, master_state, voltage, current=1):
     # start/stop the supply - master switch
     dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(0), ctypes.c_int(0), ctypes.c_double(float(master_state)))
     dwf.FDwfAnalogIOEnableSet(device_data.handle, ctypes.c_int(master_state))
+    state.on = master_state
+    state.off = not state.on
+    state.voltage = voltage if master_state else 0
+    state.current = current if master_state else 0
+    state.type = "6V"
     return
 
 """-----------------------------------------------------------------------"""
@@ -166,11 +197,18 @@ def _switch_25V_(device_data, positive_state, negative_state, positive_voltage, 
     
     # master switch
     dwf.FDwfAnalogIOEnableSet(device_data.handle, ctypes.c_int(positive_state or negative_state))
+    state.on = positive_state or negative_state
+    state.off = not state.on
+    state.positive_voltage = positive_voltage if positive_state else 0
+    state.negative_voltage = negative_voltage if negative_state else 0
+    state.positive_current = positive_current if positive_state else 0
+    state.negative_current = negative_current if negative_state else 0
+    state.type = "25V"
     return
 
 """-----------------------------------------------------------------------"""
 
-def switch(device_data, supplies_state):
+def switch(device_data, supplies_data):
     """
         turn the power supplies on/off
 
@@ -183,29 +221,29 @@ def switch(device_data, supplies_state):
     """
     if device_data.name == "Analog Discovery":
         # switch fixed supplies on AD
-        supply_state = supplies_state.state or supplies_state.positive_state
-        _switch_fixed_(device_data, supplies_state.master_state, supply_state, supplies_state.negative_state)
+        supply_state = supplies_data.state or supplies_data.positive_state
+        _switch_fixed_(device_data, supplies_data.master_state, supply_state, supplies_data.negative_state)
 
     elif device_data.name == "Analog Discovery 2" or device_data.name == "Analog Discovery Studio":
         # switch variable supplies on AD2
-        supply_state = supplies_state.state or supplies_state.positive_state
-        supply_voltage = supplies_state.voltage + supplies_state.positive_voltage
-        _switch_variable_(device_data, supplies_state.master_state, supply_state, supplies_state.negative_state, supply_voltage, supplies_state.negative_voltage)
+        supply_state = supplies_data.state or supplies_data.positive_state
+        supply_voltage = supplies_data.voltage + supplies_data.positive_voltage
+        _switch_variable_(device_data, supplies_data.master_state, supply_state, supplies_data.negative_state, supply_voltage, supplies_data.negative_voltage)
 
     elif device_data.name == "Digital Discovery" or device_data.name == "Analog Discovery Pro 3X50":
         # switch the digital supply on DD, or ADP3x50
-        supply_state = supplies_state.master_state and (supplies_state.state or supplies_state.positive_state)
-        supply_voltage = supplies_state.voltage + supplies_state.positive_voltage
+        supply_state = supplies_data.master_state and (supplies_data.state or supplies_data.positive_state)
+        supply_voltage = supplies_data.voltage + supplies_data.positive_voltage
         _switch_digital_(device_data, supply_state, supply_voltage)
 
     elif device_data.name == "Analog Discovery Pro 5250":
         # switch the 6V supply on ADP5250
-        supply_state = supplies_state.master_state and supplies_state.state
-        _switch_6V_(device_data, supply_state, supplies_state.voltage, supplies_state.current)
+        supply_state = supplies_data.master_state and supplies_data.state
+        _switch_6V_(device_data, supply_state, supplies_data.voltage, supplies_data.current)
         # switch the 25V supplies on ADP5250
-        supply_positive_state = supplies_state.master_state and supplies_state.positive_state
-        supply_negative_state = supplies_state.master_state and supplies_state.negative_state
-        _switch_25V_(device_data, supply_positive_state, supply_negative_state, supplies_state.positive_voltage, supplies_state.negative_voltage, supplies_state.positive_current, supplies_state.negative_current)
+        supply_positive_state = supplies_data.master_state and supplies_data.positive_state
+        supply_negative_state = supplies_data.master_state and supplies_data.negative_state
+        _switch_25V_(device_data, supply_positive_state, supply_negative_state, supplies_data.positive_voltage, supplies_data.negative_voltage, supplies_data.positive_current, supplies_data.negative_current)
     return
 
 """-----------------------------------------------------------------------"""
@@ -215,4 +253,13 @@ def close(device_data):
         reset the supplies
     """
     dwf.FDwfAnalogIOReset(device_data.handle)
+    state.on = False
+    state.off = True
+    state.type = ""
+    state.positive_voltage = 0    # positive supply voltage
+    state.negative_voltage = 0    # negative supply voltage
+    state.voltage = 0             # digital/positive supply voltage
+    state.positive_current = 0    # positive supply current
+    state.negative_current = 0    # negative supply current
+    state.current = 0             # digital/6V supply current
     return
