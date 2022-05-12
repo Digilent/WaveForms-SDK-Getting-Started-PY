@@ -20,11 +20,11 @@ reset = 2
 timeout = 1000
 
 # start the power supplies
-supplies_state = supplies.state()
-supplies_state.master_state = True
-supplies_state.state = True
-supplies_state.voltage = 3.3
-supplies.switch(device_data, supplies_state)
+supplies_data = supplies.data()
+supplies_data.master_state = True
+supplies_data.state = True
+supplies_data.voltage = 3.3
+supplies.switch(device_data, supplies_data)
 sleep(0.1)    # delay
 
 # initialize the reset line
@@ -90,8 +90,8 @@ static.set_state(device_data, reset, True)
 static.close(device_data)
 
 # stop and reset the power supplies
-supplies_state.master_state = False
-supplies.switch(device_data, supplies_state)
+supplies_data.master_state = False
+supplies.switch(device_data, supplies_data)
 supplies.close(device_data)
 
 """-----------------------------------"""
