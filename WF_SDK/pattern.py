@@ -82,7 +82,7 @@ def generate(device_data, channel, function, frequency, duty_cycle=50, data=[], 
     
     # get counter value range
     counter_limit = ctypes.c_uint()
-    dwf.FDwfDigitalOutCounterInfo(device_data.handle, ctypes.c_int(0), ctypes.c_int(0), ctypes.byref(counter_limit))
+    dwf.FDwfDigitalOutCounterInfo(device_data.handle, ctypes.c_int(channel), ctypes.c_int(0), ctypes.byref(counter_limit))
     
     # calculate the divider for the given signal frequency
     if function == constants.DwfDigitalOutTypePulse:
