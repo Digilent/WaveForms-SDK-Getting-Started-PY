@@ -131,9 +131,10 @@ def generate(device_data, channel, function, frequency, duty_cycle=50, data=[], 
         _update_(device_data, wait, repeat, run_time, trigger_enabled, trigger_source, trigger_edge_rising)
 
     # start generating the signal
-    dwf.FDwfDigitalOutConfigure(device_data.handle, ctypes.c_int(True))
-    state.on = True
-    state.off = False
+    if state.off:
+        dwf.FDwfDigitalOutConfigure(device_data.handle, ctypes.c_int(True))
+        state.on = True
+        state.off = False
     state.channel[channel] = True
     return
 
