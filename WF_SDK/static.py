@@ -91,10 +91,10 @@ def get_state(device_data, channel):
     
     # check the required bit
     if data[15 - channel] != "0":
-        state = True
+        value = True
     else:
-        state = False
-    return state
+        value = False
+    return value
 
 """-----------------------------------------------------------------------"""
 
