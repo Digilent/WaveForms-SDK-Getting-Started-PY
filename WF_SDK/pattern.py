@@ -126,9 +126,32 @@ def generate(device_data, channel, function, frequency, duty_cycle=50, data=[], 
     if run_time == "auto":
         run_time = len(data) / frequency
     
-    # set global instrument parameters if necessary (other than default)
-    if wait != 0 or repeat != 0 or run_time != 0 or trigger_enabled != False:
-        _update_(device_data, wait, repeat, run_time, trigger_enabled, trigger_source, trigger_edge_rising)
+    # set wait time
+    dwf.FDwfDigitalOutWaitSet(device_data.handle, ctypes.c_double(wait))
+    
+    # set repeat count
+    dwf.FDwfDigitalOutRepeatSet(device_data.handle, ctypes.c_int(repeat))
+    
+    # set run length
+    dwf.FDwfDigitalOutRunSet(device_data.handle, ctypes.c_double(run_time))
+
+    # enable triggering
+    dwf.FDwfDigitalOutRepeatTriggerSet(device_data.handle, ctypes.c_int(trigger_enabled))
+    
+    if trigger_enabled:
+        # set trigger source
+        dwf.FDwfDigitalOutTriggerSourceSet(device_data.handle, trigger_source)
+    
+        # set trigger slope
+        if trigger_edge_rising == True:
+            # rising edge
+            dwf.FDwfDigitalOutTriggerSlopeSet(device_data.handle, constants.DwfTriggerSlopeRise)
+        elif trigger_edge_rising == False:
+            # falling edge
+            dwf.FDwfDigitalOutTriggerSlopeSet(device_data.handle, constants.DwfTriggerSlopeFall)
+        elif trigger_edge_rising == None:
+            # either edge
+            dwf.FDwfDigitalOutTriggerSlopeSet(device_data.handle, constants.DwfTriggerSlopeEither)
 
     # start generating the signal
     dwf.FDwfDigitalOutConfigure(device_data.handle, ctypes.c_int(True))
@@ -167,45 +190,4 @@ def disable(device_data, channel):
     dwf.FDwfDigitalOutEnableSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(0))
     dwf.FDwfDigitalOutConfigure(device_data.handle, ctypes.c_int(True))
     state.channel[channel] = False
-    return
-
-"""-----------------------------------------------------------------------"""
-
-def _update_(device_data, wait=0, repeat=0, run_time=0,  trigger_enabled=False, trigger_source=trigger_source.none, trigger_edge_rising=True):
-    """
-        update global instrument parameters
-
-        parameters: - wait time in seconds, default is 0 seconds
-                    - repeat count, default is infinite (0)
-                    - run_time: in seconds, 0=infinite, "auto"=auto
-                    - trigger_enabled - include/exclude trigger from repeat cycle
-                    - trigger_source - possible: none, analog, digital, external[1-4]
-                    - trigger_edge_rising - True means rising, False means falling, None means either, default is rising
-    """
-    # set wait time
-    dwf.FDwfDigitalOutWaitSet(device_data.handle, ctypes.c_double(wait))
-    
-    # set repeat count
-    dwf.FDwfDigitalOutRepeatSet(device_data.handle, ctypes.c_int(repeat))
-    
-    # set run length
-    dwf.FDwfDigitalOutRunSet(device_data.handle, ctypes.c_double(run_time))
-
-    # enable triggering
-    dwf.FDwfDigitalOutRepeatTriggerSet(device_data.handle, ctypes.c_int(trigger_enabled))
-    
-    if trigger_enabled:
-        # set trigger source
-        dwf.FDwfDigitalOutTriggerSourceSet(device_data.handle, trigger_source)
-    
-        # set trigger slope
-        if trigger_edge_rising == True:
-            # rising edge
-            dwf.FDwfDigitalOutTriggerSlopeSet(device_data.handle, constants.DwfTriggerSlopeRise)
-        elif trigger_edge_rising == False:
-            # falling edge
-            dwf.FDwfDigitalOutTriggerSlopeSet(device_data.handle, constants.DwfTriggerSlopeFall)
-        elif trigger_edge_rising == None:
-            # either edge
-            dwf.FDwfDigitalOutTriggerSlopeSet(device_data.handle, constants.DwfTriggerSlopeEither)
     return
