@@ -2,7 +2,8 @@
 
 import ctypes                     # import the C compatible data types
 from sys import platform, path    # this is needed to check the OS type and get the PATH
-from os import sep                # OS specific file path separators
+from os import sep
+from turtle import position                # OS specific file path separators
 
 # load the dynamic library, get constants path (the path is OS specific)
 if platform.startswith("win"):
@@ -46,19 +47,13 @@ def set_mode(device_data, channel, output):
     # load current state of the output enable buffer
     mask = ctypes.c_uint16()
     dwf.FDwfDigitalIOOutputEnableGet(device_data.handle, ctypes.byref(mask))
-    
-    # convert mask to list
-    mask = list(bin(mask.value)[2:].zfill(16))
+    mask = mask.value
     
     # set bit in mask
-    if output:
-        mask[15 - channel] = "1"
+    if output == True:
+        mask |= __rotate_left__(1, channel)
     else:
-        mask[15 - channel] = "0"
-    
-    # convert mask to number
-    mask = "".join(element for element in mask)
-    mask = int(mask, 2)
+        mask &= __rotate_left__(0xFFFE, channel)
     
     # set the pin to output
     dwf.FDwfDigitalIOOutputEnableSet(device_data.handle, ctypes.c_int(mask))
@@ -85,12 +80,10 @@ def get_state(device_data, channel):
     # get the current state of the pins
     data = ctypes.c_uint32()  # variable for this current state
     dwf.FDwfDigitalIOInputStatus(device_data.handle, ctypes.byref(data))
-    
-    # convert the state to a 16 character binary string
-    data = list(bin(data.value)[2:].zfill(16))
+    data = data.value
     
     # check the required bit
-    if data[15 - channel] != "0":
+    if data & (1 << channel) != 0:
         value = True
     else:
         value = False
@@ -100,7 +93,7 @@ def get_state(device_data, channel):
 
 def set_state(device_data, channel, value):
     """
-        set a DIO line as input, or as output
+        set a DIO line as High, or Low
 
         parameters: - device data
                     - selected DIO channel number
@@ -109,19 +102,13 @@ def set_state(device_data, channel, value):
     # load current state of the output state buffer
     mask = ctypes.c_uint16()
     dwf.FDwfDigitalIOOutputGet(device_data.handle, ctypes.byref(mask))
-    
-    # convert mask to list
-    mask = list(bin(mask.value)[2:].zfill(16))
+    mask = mask.value
     
     # set bit in mask
-    if value:
-        mask[15 - channel] = "1"
+    if value == True:
+        mask |= __rotate_left__(1, channel)
     else:
-        mask[15 - channel] = "0"
-    
-    # convert mask to number
-    mask = "".join(element for element in mask)
-    mask = int(mask, 2)
+        mask &= __rotate_left__(0xFFFE, channel)
     
     # set the pin state
     dwf.FDwfDigitalIOOutputSet(device_data.handle, ctypes.c_int(mask))
@@ -181,20 +168,14 @@ def set_pull(device_data, channel, direction):
     # get pull enable mask
     mask = ctypes.c_uint16()
     dwf.FDwfAnalogIOChannelNodeGet(device_data.handle, ctypes.c_int(0), ctypes.c_int(2), ctypes.byref(mask))
-
-    # convert mask to list
-    mask = list(bin(mask.value)[2:].zfill(16))
+    mask = mask.value
     
     # set bit in mask
     if direction.value == 0.5:
-        mask[15 - channel] = "0"
+        mask |= __rotate_left__(1, channel)
     else:
-        mask[15 - channel] = "1"
+        mask &= __rotate_left__(0xFFFE, channel)
     
-    # convert mask to number
-    mask = "".join(element for element in mask)
-    mask = int(mask, 2)
-
     # set pull enable mask
     dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(0), ctypes.c_int(2), ctypes.c_int(mask))
     
@@ -203,19 +184,13 @@ def set_pull(device_data, channel, direction):
         # get direction mask
         mask = ctypes.c_uint16()
         dwf.FDwfAnalogIOChannelNodeGet(device_data.handle, ctypes.c_int(0), ctypes.c_int(3), ctypes.byref(mask))
-
-        # convert mask to list
-        mask = list(bin(mask.value)[2:].zfill(16))
-        
+        mask = mask.value
+    
         # set bit in mask
-        if direction.value == 1:
-            mask[15 - channel] = "1"
-        elif direction.value == 0:
-            mask[15 - channel] = "0"
-        
-        # convert mask to number
-        mask = "".join(element for element in mask)
-        mask = int(mask, 2)
+        if direction.value == 1.0:
+            mask |= __rotate_left__(1, channel)
+        else:
+            mask &= __rotate_left__(0xFFFE, channel)
 
         # set direction mask
         dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(0), ctypes.c_int(3), ctypes.c_int(mask))
@@ -235,3 +210,11 @@ def close(device_data):
     state.pull = [None for _ in range(16)]
     state.current = None
     return
+
+"""-----------------------------------------------------------------------"""
+
+def __rotate_left__(number, position, size=16):
+    """
+        rotate left a number bitwise
+    """
+    return (number << position) | (number >> (size - position))
