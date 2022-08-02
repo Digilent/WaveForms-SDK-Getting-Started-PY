@@ -29,6 +29,7 @@ class data:
     """ stores the sampling frequency and the buffer size """
     sampling_frequency = 20e06
     buffer_size = 8192
+    max_buffer_size = 0
 
 class state:
     """ stores the state of the instrument """
@@ -47,16 +48,20 @@ class trigger_source:
 
 """-----------------------------------------------------------------------"""
 
-def open(device_data, sampling_frequency=20e06, buffer_size=8192, offset=0, amplitude_range=5):
+def open(device_data, sampling_frequency=20e06, buffer_size=0, offset=0, amplitude_range=5):
     """
         initialize the oscilloscope
 
         parameters: - device data
                     - sampling frequency in Hz, default is 20MHz
-                    - buffer size, default is 8192
+                    - buffer size, default is 0 (maximum)
                     - offset voltage in Volts, default is 0V
                     - amplitude range in Volts, default is ±5V
     """
+    # set global variables
+    data.sampling_frequency = sampling_frequency
+    data.max_buffer_size = device_data.analog.input.max_buffer_size
+
     # enable all channels
     dwf.FDwfAnalogInChannelEnableSet(device_data.handle, ctypes.c_int(0), ctypes.c_bool(True))
     
@@ -67,6 +72,9 @@ def open(device_data, sampling_frequency=20e06, buffer_size=8192, offset=0, ampl
     dwf.FDwfAnalogInChannelRangeSet(device_data.handle, ctypes.c_int(0), ctypes.c_double(amplitude_range))
     
     # set the buffer size (data point in a recording)
+    if buffer_size == 0 or buffer_size > data.max_buffer_size:
+        buffer_size = data.max_buffer_size
+    data.buffer_size = buffer_size
     dwf.FDwfAnalogInBufferSizeSet(device_data.handle, ctypes.c_int(buffer_size))
     
     # set the acquisition frequency (in Hz)
@@ -74,8 +82,7 @@ def open(device_data, sampling_frequency=20e06, buffer_size=8192, offset=0, ampl
     
     # disable averaging (for more info check the documentation)
     dwf.FDwfAnalogInChannelFilterSet(device_data.handle, ctypes.c_int(-1), constants.filterDecimate)
-    data.sampling_frequency = sampling_frequency
-    data.buffer_size = buffer_size
+    
     state.on = True
     state.off = False
     return

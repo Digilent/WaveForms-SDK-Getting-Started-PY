@@ -29,6 +29,7 @@ class data:
     """ stores the sampling frequency and the buffer size """
     sampling_frequency = 100e06
     buffer_size = 4096
+    max_buffer_size = 0
 
 class state:
     """ stores the state of the instrument """
@@ -38,14 +39,18 @@ class state:
 
 """-----------------------------------------------------------------------"""
 
-def open(device_data, sampling_frequency=100e06, buffer_size=4096):
+def open(device_data, sampling_frequency=100e06, buffer_size=0):
     """
         initialize the logic analyzer
 
         parameters: - device data
                     - sampling frequency in Hz, default is 100MHz
-                    - buffer size, default is 4096
+                    - buffer size, default is 0 (maximum)
     """
+    # set global variables
+    data.sampling_frequency = sampling_frequency
+    data.max_buffer_size = device_data.digital.input.max_buffer_size
+
     # get internal clock frequency
     internal_frequency = ctypes.c_double()
     dwf.FDwfDigitalInInternalClockInfo(device_data.handle, ctypes.byref(internal_frequency))
@@ -57,9 +62,11 @@ def open(device_data, sampling_frequency=100e06, buffer_size=4096):
     dwf.FDwfDigitalInSampleFormatSet(device_data.handle, ctypes.c_int(16))
     
     # set buffer size
-    dwf.FDwfDigitalInBufferSizeSet(device_data.handle, ctypes.c_int(buffer_size))
-    data.sampling_frequency = sampling_frequency
+    if buffer_size == 0 or buffer_size > data.max_buffer_size:
+        buffer_size = data.max_buffer_size
     data.buffer_size = buffer_size
+    dwf.FDwfDigitalInBufferSizeSet(device_data.handle, ctypes.c_int(buffer_size))
+    
     state.on = True
     state.off = False
     return
