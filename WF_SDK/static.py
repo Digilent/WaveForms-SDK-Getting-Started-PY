@@ -2,8 +2,7 @@
 
 import ctypes                     # import the C compatible data types
 from sys import platform, path    # this is needed to check the OS type and get the PATH
-from os import sep
-from turtle import position                # OS specific file path separators
+from os import sep                # OS specific file path separators
 
 # load the dynamic library, get constants path (the path is OS specific)
 if platform.startswith("win"):
