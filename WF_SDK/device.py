@@ -1,4 +1,4 @@
-""" DEVICE CONTROL FUNCTIONS: open, check_error, close """
+""" DEVICE CONTROL FUNCTIONS: open, check_error, close, temperature """
 
 """
 import ctypes                            # import the C compatible data types
@@ -66,6 +66,49 @@ class data:
     """ stores the device handle and the device name """
     handle = ctypes.c_int(0)
     name = ""
+    version = ""
+    class analog:
+        class input:
+            channel_count = 0
+            max_buffer_size = 0
+            max_resolution = 0
+            min_range = 0
+            max_range = 0
+            steps_range = 0
+            min_offset = 0
+            max_offset = 0
+            steps_offset = 0
+        class output:
+            channel_count = 0
+            node_count = []
+            node_type = []
+            max_buffer_size = []
+            min_amplitude = []
+            max_amplitude = []
+            min_offset = []
+            max_offset = []
+            min_frequency = []
+            max_frequency = []
+        class IO:
+            channel_count = 0
+            node_count = []
+            channel_name = []
+            channel_label = []
+            node_name = []
+            node_unit = []
+            min_set_range = []
+            max_set_range = []
+            min_read_range = []
+            max_read_range = []
+            set_steps = []
+            read_steps = []
+    class digital:
+        class input:
+            channel_count = 0
+            max_buffer_size = 0
+        class output:
+            channel_count = 0
+            max_buffer_size = 0
 
 class state:
     """ stores the state of the device """
@@ -75,11 +118,13 @@ class state:
 
 """-----------------------------------------------------------------------"""
 
-def open(device=None):
+def open(device=None, config=0):
     """
         open a specific device
 
-        parameters: - device type: None (first device), "Analog Discovery", "Analog Discovery 2", "Analog Discovery Studio", "Digital Discovery", "Analog Discovery Pro 3X50" and "Analog Discovery Pro 5250"
+        parameters: - device type: None (first device), "Analog Discovery", "Analog Discovery 2", "Analog Discovery Studio", "Digital Discovery"
+                                   "Analog Discovery Pro 3X50" and "Analog Discovery Pro 5250"
+                    - configuration
     
         returns:    - device data
     """
@@ -113,7 +158,7 @@ def open(device=None):
     # connect to the first available device
     index = 0
     while device_handle.value == 0 and index < device_count.value:
-        dwf.FDwfDeviceOpen(ctypes.c_int(index), ctypes.byref(device_handle))
+        dwf.FDwfDeviceConfigOpen(ctypes.c_int(index), ctypes.c_int(config), ctypes.byref(device_handle))
         index += 1  # increment the index and try again if the device is busy
 
     # check connected device type
@@ -128,9 +173,11 @@ def open(device=None):
             if pair[1].value == device_id.value:
                 device_name = pair[0]
                 break
-
+    
+    global data
     data.handle = device_handle
     data.name = device_name
+    data = __get_info__(data)
     state.connected = True
     state.disconnected = False
     return data
@@ -172,3 +219,203 @@ def close(device_data):
     state.connected = False
     state.disconnected = True
     return
+
+"""-----------------------------------------------------------------------"""
+
+def temperature(device_data):
+    """
+        return the board temperature
+    """
+    channel = -1
+    node = -1
+    # find the system monitor
+    for channel_index in range(device_data.analog.IO.channel_count):
+        if device_data.analog.IO.channel_label[channel_index] == "System":
+            channel = channel_index
+            break
+    if channel < 0:
+        return 0
+    
+    # find the temperature node
+    for node_index in range(device_data.analog.IO.node_count[channel]):
+        if device_data.analog.IO.node_name[channel][node_index] == "Temp":
+            node = node_index
+            break
+    if node < 0:
+        return 0
+    
+    # read the temperature
+    dwf.FDwfAnalogIOStatus(device_data.handle)
+    temperature = ctypes.c_double()
+    dwf.FDwfAnalogIOChannelNodeStatus(device_data.handle, ctypes.c_int(channel), ctypes.c_int(node), ctypes.byref(temperature))
+    return temperature.value
+
+"""-----------------------------------------------------------------------"""
+
+def __get_info__(device_data):
+    """
+        get and return device information
+    """
+    # check WaveForms version
+    version = ctypes.create_string_buffer(16)
+    dwf.FDwfGetVersion(version)
+    device_data.version = str(version.value)[2:-1]
+
+    # define temporal variables
+    temp1 = ctypes.c_int()
+    temp2 = ctypes.c_int()
+    temp3 = ctypes.c_int()
+
+    # analog input information
+    # channel count
+    dwf.FDwfAnalogInChannelCount(device_data.handle, ctypes.byref(temp1))
+    device_data.analog.input.channel_count = temp1.value
+    # buffer size
+    dwf.FDwfAnalogInBufferSizeInfo(device_data.handle, 0, ctypes.byref(temp1))
+    device_data.analog.input.max_buffer_size = temp1.value
+    # ADC resolution
+    dwf.FDwfAnalogInBitsInfo(device_data.handle, ctypes.byref(temp1))
+    device_data.analog.input.max_resolution = temp1.value
+    # range information
+    temp1 = ctypes.c_double()
+    temp2 = ctypes.c_double()
+    temp3 = ctypes.c_double()
+    dwf.FDwfAnalogInChannelRangeInfo(device_data.handle, ctypes.byref(temp1), ctypes.byref(temp2), ctypes.byref(temp3))
+    device_data.analog.input.min_range = temp1.value
+    device_data.analog.input.max_range = temp2.value
+    device_data.analog.input.steps_range = int(temp3.value)
+    # offset information
+    dwf.FDwfAnalogInChannelOffsetInfo(device_data.handle, ctypes.byref(temp1), ctypes.byref(temp2), ctypes.byref(temp3))
+    device_data.analog.input.min_offset = temp1.value
+    device_data.analog.input.max_offset = temp2.value
+    device_data.analog.input.steps_offset = int(temp3.value)
+
+    # analog output information
+    temp1 = ctypes.c_int()
+    dwf.FDwfAnalogOutCount(device_data.handle, ctypes.byref(temp1))
+    device_data.analog.output.channel_count = temp1.value
+    for channel_index in range(device_data.analog.output.channel_count):
+        # check node types and node count
+        temp1 = ctypes.c_int()
+        dwf.FDwfAnalogOutNodeInfo(device_data.handle, ctypes.c_int(channel_index), ctypes.byref(temp1))
+        templist = []
+        for node_index in range(3):
+            if ((1 << node_index) & int(temp1.value)) == 0:
+                continue
+            elif node_index == constants.AnalogOutNodeCarrier.value:
+                templist.append("carrier")
+            elif node_index == constants.AnalogOutNodeFM.value:
+                templist.append("FM")
+            elif node_index == constants.AnalogOutNodeAM.value:
+                templist.append("AM")
+        device_data.analog.output.node_type.append(templist)
+        device_data.analog.output.node_count.append(len(templist))
+        # buffer size
+        templist = []
+        for node_index in range(device_data.analog.output.node_count[channel_index]):
+            dwf.FDwfAnalogOutNodeDataInfo(device_data.handle, ctypes.c_int(channel_index), ctypes.c_int(node_index), 0, ctypes.byref(temp1))
+            templist.append(temp1.value)
+        device_data.analog.output.max_buffer_size.append(templist)
+        # amplitude information
+        templist1 = []
+        templist2 = []
+        temp1 = ctypes.c_double()
+        temp2 = ctypes.c_double()
+        for node_index in range(device_data.analog.output.node_count[channel_index]):
+            dwf.FDwfAnalogOutNodeAmplitudeInfo(device_data.handle, ctypes.c_int(channel_index), ctypes.c_int(node_index), ctypes.byref(temp1), ctypes.byref(temp2))
+            templist1.append(temp1.value)
+            templist2.append(temp2.value)
+        device_data.analog.output.min_amplitude.append(templist1)
+        device_data.analog.output.max_amplitude.append(templist2)
+        # offset information
+        templist1 = []
+        templist2 = []
+        for node_index in range(device_data.analog.output.node_count[channel_index]):
+            dwf.FDwfAnalogOutNodeOffsetInfo(device_data.handle, ctypes.c_int(channel_index), ctypes.c_int(node_index), ctypes.byref(temp1), ctypes.byref(temp2))
+            templist1.append(temp1.value)
+            templist2.append(temp2.value)
+        device_data.analog.output.min_offset.append(templist1)
+        device_data.analog.output.max_offset.append(templist2)
+        # frequency information
+        templist1 = []
+        templist2 = []
+        for node_index in range(device_data.analog.output.node_count[channel_index]):
+            dwf.FDwfAnalogOutNodeFrequencyInfo(device_data.handle, ctypes.c_int(channel_index), ctypes.c_int(node_index), ctypes.byref(temp1), ctypes.byref(temp2))
+            templist1.append(temp1.value)
+            templist2.append(temp2.value)
+        device_data.analog.output.min_frequency.append(templist1)
+        device_data.analog.output.max_frequency.append(templist2)
+
+    # analog IO information
+    # channel count
+    temp1 = ctypes.c_int()
+    dwf.FDwfAnalogIOChannelCount(device_data.handle, ctypes.byref(temp1))
+    device_data.analog.IO.channel_count = temp1.value
+    for channel_index in range(device_data.analog.IO.channel_count):
+        # channel names and labels
+        temp1 = ctypes.create_string_buffer(256)
+        temp2 = ctypes.create_string_buffer(256)
+        dwf.FDwfAnalogIOChannelName(device_data.handle, ctypes.c_int(channel_index), temp1, temp2)
+        device_data.analog.IO.channel_name.append(str(temp1.value)[2:-1])
+        device_data.analog.IO.channel_label.append(str(temp2.value)[2:-1])
+        # check node count
+        temp1 = ctypes.c_int()
+        dwf.FDwfAnalogIOChannelInfo(device_data.handle, ctypes.c_int(channel_index), ctypes.byref(temp1))
+        device_data.analog.IO.node_count.append(temp1.value)
+        # node names and units
+        templist1 = []
+        templist2 = []
+        for node_index in range(device_data.analog.IO.node_count[channel_index]):
+            temp1 = ctypes.create_string_buffer(256)
+            temp2 = ctypes.create_string_buffer(256)
+            dwf.FDwfAnalogIOChannelNodeName(device_data.handle, ctypes.c_int(channel_index), ctypes.c_int(node_index), temp1, temp2)
+            templist1.append(str(temp1.value)[2:-1])
+            templist2.append(str(temp2.value)[2:-1])
+        device_data.analog.IO.node_name.append(templist1)
+        device_data.analog.IO.node_unit.append(templist2)
+        # node write info
+        templist1 = []
+        templist2 = []
+        templist3 = []
+        temp1 = ctypes.c_double()
+        temp2 = ctypes.c_double()
+        temp3 = ctypes.c_int()
+        for node_index in range(device_data.analog.IO.node_count[channel_index]):
+            dwf.FDwfAnalogIOChannelNodeSetInfo(device_data.handle, ctypes.c_int(channel_index), ctypes.c_int(node_index), ctypes.byref(temp1), ctypes.byref(temp2), ctypes.byref(temp3))
+            templist1.append(temp1.value)
+            templist2.append(temp2.value)
+            templist3.append(temp3.value)
+        device_data.analog.IO.min_set_range.append(templist1)
+        device_data.analog.IO.max_set_range.append(templist2)
+        device_data.analog.IO.set_steps.append(templist3)
+        # node read info
+        templist1 = []
+        templist2 = []
+        templist3 = []
+        for node_index in range(device_data.analog.IO.node_count[channel_index]):
+            dwf.FDwfAnalogIOChannelNodeStatusInfo(device_data.handle, ctypes.c_int(channel_index), ctypes.c_int(node_index), ctypes.byref(temp1), ctypes.byref(temp2), ctypes.byref(temp3))
+            templist1.append(temp1.value)
+            templist2.append(temp2.value)
+            templist3.append(temp3.value)
+        device_data.analog.IO.min_read_range.append(templist1)
+        device_data.analog.IO.max_read_range.append(templist2)
+        device_data.analog.IO.read_steps.append(templist3)
+
+    # digital input information
+    # channel count
+    temp1 = ctypes.c_int()
+    dwf.FDwfDigitalInBitsInfo(device_data.handle, ctypes.byref(temp1))
+    device_data.digital.input.channel_count = temp1.value
+    # buffer size
+    dwf.FDwfDigitalInBufferSizeInfo(device_data.handle, ctypes.byref(temp1))
+    device_data.digital.input.max_buffer_size = temp1.value
+
+    # digital output information
+    # channel count
+    dwf.FDwfDigitalOutCount(device_data.handle, ctypes.byref(temp1))
+    device_data.digital.output.channel_count = temp1.value
+    # buffer size
+    dwf.FDwfDigitalOutDataInfo(device_data.handle, ctypes.c_int(0), ctypes.byref(temp1))
+    device_data.digital.output.max_buffer_size = temp1.value
+
+    return device_data
