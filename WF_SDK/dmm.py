@@ -25,6 +25,34 @@ import dwfconstants as constants
 
 """-----------------------------------------------------------------------"""
 
+class mode:
+    """ DMM modes """
+    ac_voltage = constants.DwfDmmACVoltage
+    dc_voltage = constants.DwfDmmDCVoltage
+    ac_high_current = constants.DwfDmmACCurrent
+    dc_high_current = constants.DwfDmmDCCurrent
+    ac_low_current = constants.DwfDmmACLowCurrent
+    dc_low_current = constants.DwfDmmDCLowCurrent
+    resistance = constants.DwfDmmResistance
+    continuity = constants.DwfDmmContinuity
+    diode = constants.DwfDmmDiode
+    temperature = constants.DwfDmmTemperature
+
+"""-----------------------------------------------------------------------"""
+
+class data:
+    """ storers instrument information """
+    __channel__ = -1
+    class __nodes__:
+        __enable__ = -1
+        __mode__ = -1
+        __range__ = -1
+        __meas__ = -1
+        __raw__ = -1
+        __input__ = -1
+
+"""-----------------------------------------------------------------------"""
+
 class state:
     """ stores the state of the instrument """
     on = False
@@ -36,85 +64,75 @@ def open(device_data):
     """
         initialize the digital multimeter
     """
+    # find channel
+    for channel_index in range(device_data.analog.IO.channel_count):
+        if device_data.analog.IO.channel_label[channel_index] == "DMM":
+            data.__channel__ = channel_index
+            break
+    
+    # find nodes
+    if data.__channel__ >= 0:
+        for node_index in range(device_data.analog.IO.node_count[data.__channel__]):
+            if device_data.analog.IO.node_name[data.__channel__][node_index] == "Enable":
+                data.__nodes__.__enable__ = node_index
+            elif device_data.analog.IO.node_name[data.__channel__][node_index] == "Mode":
+                data.__nodes__.__mode__ = node_index
+            elif device_data.analog.IO.node_name[data.__channel__][node_index] == "Range":
+                data.__nodes__.__range__ = node_index
+            elif device_data.analog.IO.node_name[data.__channel__][node_index] == "Meas":
+                data.__nodes__.__meas__ = node_index
+            elif device_data.analog.IO.node_name[data.__channel__][node_index] == "Raw":
+                data.__nodes__.__raw__ = node_index
+            elif device_data.analog.IO.node_name[data.__channel__][node_index] == "Input":
+                data.__nodes__.__input__ = node_index
+
     # enable the DMM
-    dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(3), ctypes.c_int(0), ctypes.c_double(1.0))
-    state.on = True
-    state.off = False
+    if data.__channel__ >= 0 and data.__nodes__.__enable__ >= 0:
+        dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(data.__channel__), ctypes.c_int(data.__nodes__.__enable__), ctypes.c_double(1.0))
+        state.on = True
+        state.off = False
     return
 
 """-----------------------------------------------------------------------"""
 
-def measure(device_data, mode, ac=False, range=0, high_impedance=False):
+def measure(device_data, mode, range=0, high_impedance=False):
     """
         measure a voltage/current/resistance/continuity/temperature
 
         parameters: - device data
-                    - mode: "voltage", "low current", "high current", "resistance", "continuity", "diode", "temperature"
-                    - ac: True means AC value, False means DC value, default is DC
+                    - mode: dmm.mode.ac_voltage/dc_voltage/ac_high_current/dc_high_current/ac_low_current/dc_low_current/resistance/continuity/diode/temperature
                     - range: voltage/current/resistance/temperature range, 0 means auto, default is auto
                     - high_impedance: input impedance for DC voltage measurement, False means 10MΩ, True means 10GΩ, default is 10MΩ
         
         returns:    - the measured value in V/A/Ω/°C, or None on error
     """
-    # set voltage mode
-    if mode == "voltage":
-        # set coupling
-        if ac:
-            dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(3), ctypes.c_int(1), constants.DwfDmmACVoltage)
-        else:
-            dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(3), ctypes.c_int(1), constants.DwfDmmDCVoltage)
-
+    if data.__channel__ >= 0:
         # set input impedance
-        if high_impedance:
-            dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(3), ctypes.c_int(5), ctypes.c_double(1))
-        else:
-            dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(3), ctypes.c_int(5), ctypes.c_double(0))
+        if data.__nodes__.__input__ >= 0:
+            if high_impedance:
+                dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(data.__channel__), ctypes.c_int(data.__nodes__.__input__), ctypes.c_double(1))
+            else:
+                dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(data.__channel__), ctypes.c_int(data.__nodes__.__input__), ctypes.c_double(0))
 
-    # set high current mode
-    elif mode == "high current":
-        # set coupling
-        if ac:
-            dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(3), ctypes.c_int(1), constants.DwfDmmACCurrent)
-        else:
-            dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(3), ctypes.c_int(1), constants.DwfDmmDCCurrent)
+        # set mode
+        if data.__nodes__.__mode__ >= 0:
+            dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(data.__channel__), ctypes.c_int(data.__nodes__.__mode__), mode)
 
-    # set low current mode
-    elif mode == "low current":
-        # set coupling
-        if ac:
-            dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(3), ctypes.c_int(1), constants.DwfDmmACLowCurrent)
-        else:
-            dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(3), ctypes.c_int(1), constants.DwfDmmDCLowCurrent)
-            
-    # set resistance mode
-    elif mode == "resistance":
-        dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(3), ctypes.c_int(1), constants.DwfDmmResistance)
+        # set range
+        if data.__nodes__.__range__ >= 0:
+            dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(data.__channel__), ctypes.c_int(data.__nodes__.__range__), range)
 
-    # set continuity mode
-    elif mode == "continuity":
-        dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(3), ctypes.c_int(1), constants.DwfDmmContinuity)
-
-    # set diode mode
-    elif mode == "diode":
-        dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(3), ctypes.c_int(1), constants.DwfDmmDiode)
-
-    # set temperature mode
-    elif mode == "temperature":
-        dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(3), ctypes.c_int(1), constants.DwfDmmTemperature)
+        # fetch analog IO status
+        if dwf.FDwfAnalogIOStatus(device_data.handle) == 0:
+            # signal error
+            return None
         
-    # set range
-    dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(3), ctypes.c_int(2), ctypes.c_double(range))
-
-    # fetch analog I/O status
-    if dwf.FDwfAnalogIOStatus(device_data.handle) == 0:
-        # signal error
-        return None
-
-    # get reading
-    measurement = ctypes.c_double()
-    dwf.FDwfAnalogIOChannelNodeStatus(device_data.handle, ctypes.c_int(3), ctypes.c_int(3), ctypes.byref(measurement))
-
-    return measurement.value
+        # get reading
+        if data.__nodes__.__meas__ >= 0:
+            measurement = ctypes.c_double()
+            dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(data.__channel__), ctypes.c_int(data.__nodes__.__meas__), ctypes.byref(measurement))
+            return measurement.value
+    return None
 
 """-----------------------------------------------------------------------"""
 
@@ -123,9 +141,10 @@ def close(device_data):
         reset the instrument
     """
     # disable the DMM
-    dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(3), ctypes.c_int(0), ctypes.c_double(0))
+    if data.__channel__ >= 0 and data.__nodes__.__enable__ >= 0:
+        dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(data.__channel__), ctypes.c_int(data.__nodes__.__enable__), ctypes.c_double(0))
+        state.on = False
+        state.off = True
     # reset the instrument
     dwf.FDwfAnalogIOReset(device_data.handle)
-    state.on = False
-    state.off = True
     return
