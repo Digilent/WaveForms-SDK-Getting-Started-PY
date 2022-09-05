@@ -72,7 +72,7 @@ def open(device_data, sampling_frequency=20e06, buffer_size=0, offset=0, amplitu
     dwf.FDwfAnalogInChannelRangeSet(device_data.handle, ctypes.c_int(0), ctypes.c_double(amplitude_range))
     
     # set the buffer size (data point in a recording)
-    if buffer_size == 0 or buffer_size > data.max_buffer_size:
+    if buffer_size == 0:
         buffer_size = data.max_buffer_size
     data.buffer_size = buffer_size
     dwf.FDwfAnalogInBufferSizeSet(device_data.handle, ctypes.c_int(buffer_size))
@@ -167,8 +167,7 @@ def record(device_data, channel):
         parameters: - device data
                     - the selected oscilloscope channel (1-2, or 1-4)
 
-        returns:    - buffer - a list with the recorded voltages
-                    - time - a list with the time moments for each voltage in seconds (with the same index as "buffer")
+        returns:    - a list with the recorded voltages
     """
     # set up the instrument
     dwf.FDwfAnalogInConfigure(device_data.handle, ctypes.c_bool(False), ctypes.c_bool(True))
@@ -187,13 +186,9 @@ def record(device_data, channel):
     buffer = (ctypes.c_double * data.buffer_size)()   # create an empty buffer
     dwf.FDwfAnalogInStatusData(device_data.handle, ctypes.c_int(channel - 1), buffer, ctypes.c_int(data.buffer_size))
     
-    # calculate aquisition time
-    time = range(0, data.buffer_size)
-    time = [moment / data.sampling_frequency for moment in time]
-    
     # convert into list
     buffer = [float(element) for element in buffer]
-    return buffer, time
+    return buffer
 
 """-----------------------------------------------------------------------"""
 

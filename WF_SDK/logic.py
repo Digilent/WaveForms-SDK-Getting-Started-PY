@@ -62,7 +62,7 @@ def open(device_data, sampling_frequency=100e06, buffer_size=0):
     dwf.FDwfDigitalInSampleFormatSet(device_data.handle, ctypes.c_int(16))
     
     # set buffer size
-    if buffer_size == 0 or buffer_size > data.max_buffer_size:
+    if buffer_size == 0:
         buffer_size = data.max_buffer_size
     data.buffer_size = buffer_size
     dwf.FDwfDigitalInBufferSizeSet(device_data.handle, ctypes.c_int(buffer_size))
@@ -129,8 +129,7 @@ def record(device_data, channel):
         parameters: - device data
                     - channel - the selected DIO line number
 
-        returns:    - buffer - a list with the recorded logic values
-                    - time - a list with the time moments for each value in seconds (with the same index as "buffer")
+        returns:    - a list with the recorded logic values
     """
     # set up the instrument
     dwf.FDwfDigitalInConfigure(device_data.handle, ctypes.c_bool(False), ctypes.c_bool(True))
@@ -149,19 +148,11 @@ def record(device_data, channel):
     dwf.FDwfDigitalInStatusData(device_data.handle, buffer, ctypes.c_int(2 * data.buffer_size))
     
     # convert buffer to list of lists of integers
-    buffer = [int(element) for element in buffer]
-    result = [[] for _ in range(16)]
+    result = []
     for point in buffer:
-        for index in range(16):
-            result[index].append(point & (1 << index))
+        result.append((int(point) & (1 << channel)) >> channel)
     
-    # calculate acquisition time
-    time = range(0, data.buffer_size)
-    time = [moment / data.sampling_frequency for moment in time]
-    
-    # get channel specific data
-    buffer = result[channel]
-    return buffer, time
+    return result
 
 """-----------------------------------------------------------------------"""
 
