@@ -11,3 +11,5 @@ from WF_SDK import logic
 from WF_SDK import pattern
 from WF_SDK import static
 from WF_SDK import protocol
+
+from WF_SDK import tools
