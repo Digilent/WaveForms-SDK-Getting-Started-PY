@@ -76,6 +76,8 @@ def generate(device_data, channel, function, frequency, duty_cycle=50, data=[], 
                     - trigger_source - possible: none, analog, digital, external[1-4]
                     - trigger_edge_rising - True means rising, False means falling, None means either, default is rising
     """
+    if device_data.name == "Digital Discovery":
+        channel = channel - 24
     # get internal clock frequency
     internal_frequency = ctypes.c_double()
     dwf.FDwfDigitalOutInternalClockInfo(device_data.handle, ctypes.byref(internal_frequency))
@@ -176,6 +178,8 @@ def close(device_data):
 
 def enable(device_data, channel):
     """ enables a digital output channel """
+    if device_data.name == "Digital Discovery":
+        channel = channel - 24
     dwf.FDwfDigitalOutEnableSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(1))
     dwf.FDwfDigitalOutConfigure(device_data.handle, ctypes.c_int(True))
     state.on = True
@@ -187,6 +191,8 @@ def enable(device_data, channel):
 
 def disable(device_data, channel):
     """ disables a digital output channel """
+    if device_data.name == "Digital Discovery":
+        channel = channel - 24
     dwf.FDwfDigitalOutEnableSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(0))
     dwf.FDwfDigitalOutConfigure(device_data.handle, ctypes.c_int(True))
     state.channel[channel] = False

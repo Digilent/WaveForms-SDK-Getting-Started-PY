@@ -53,6 +53,9 @@ def set_mode(device_data, channel, output):
                     - selected DIO channel number
                     - True means output, False means input
     """
+    if device_data.name == "Digital Discovery":
+        channel = channel - 24
+
     # count the DIO channels
     state.count = min(device_data.digital.input.channel_count, device_data.digital.output.channel_count)
 
@@ -83,6 +86,9 @@ def get_state(device_data, channel):
 
         returns:    - True if the channel is HIGH, or False, if the channel is LOW
     """
+    if device_data.name == "Digital Discovery":
+        channel = channel - 24
+
     # load internal buffer with current state of the pins
     dwf.FDwfDigitalIOStatus(device_data.handle)
     
@@ -108,6 +114,9 @@ def set_state(device_data, channel, value):
                     - selected DIO channel number
                     - True means HIGH, False means LOW
     """
+    if device_data.name == "Digital Discovery":
+        channel = channel - 24
+
     # count the DIO channels
     state.count = min(device_data.digital.input.channel_count, device_data.digital.output.channel_count)
 
@@ -164,6 +173,9 @@ def set_pull(device_data, channel, direction):
                     - selected DIO channel number
                     - direction: pull.up, pull.idle, or pull.down
     """
+    if device_data.name == "Digital Discovery":
+        channel = channel - 24
+        
     # count the DIO channels
     state.count = min(device_data.digital.input.channel_count, device_data.digital.output.channel_count)
 
