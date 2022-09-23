@@ -63,13 +63,13 @@ def open(device_data, sampling_frequency=20e06, buffer_size=0, offset=0, amplitu
     data.max_buffer_size = device_data.analog.input.max_buffer_size
 
     # enable all channels
-    dwf.FDwfAnalogInChannelEnableSet(device_data.handle, ctypes.c_int(0), ctypes.c_bool(True))
+    dwf.FDwfAnalogInChannelEnableSet(device_data.handle, ctypes.c_int(-1), ctypes.c_bool(True))
     
     # set offset voltage (in Volts)
-    dwf.FDwfAnalogInChannelOffsetSet(device_data.handle, ctypes.c_int(0), ctypes.c_double(offset))
+    dwf.FDwfAnalogInChannelOffsetSet(device_data.handle, ctypes.c_int(-1), ctypes.c_double(offset))
     
     # set range (maximum signal amplitude in Volts)
-    dwf.FDwfAnalogInChannelRangeSet(device_data.handle, ctypes.c_int(0), ctypes.c_double(amplitude_range))
+    dwf.FDwfAnalogInChannelRangeSet(device_data.handle, ctypes.c_int(-1), ctypes.c_double(amplitude_range))
     
     # set the buffer size (data point in a recording)
     if buffer_size == 0:
