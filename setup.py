@@ -5,7 +5,7 @@ with open("README.md", "r") as f:
 
 setup(
    name = "WF_SDK",
-   version = "3.0",
+   version = "4.0",
    description = "This module realizes communication with Digilent Test & Measurement devices",
    license = "MIT",
    long_description = long_description,
