@@ -22,6 +22,7 @@ else:
 # import constants
 path.append(constants_path)
 import dwfconstants as constants
+from WF_SDK.device import check_error
 
 """-----------------------------------------------------------------------"""
 
@@ -53,13 +54,6 @@ class data:
 
 """-----------------------------------------------------------------------"""
 
-class state:
-    """ stores the state of the instrument """
-    on = False
-    off = True
-
-"""-----------------------------------------------------------------------"""
-
 def open(device_data):
     """
         initialize the digital multimeter
@@ -88,9 +82,8 @@ def open(device_data):
 
     # enable the DMM
     if data.__channel__ >= 0 and data.__nodes__.__enable__ >= 0:
-        dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(data.__channel__), ctypes.c_int(data.__nodes__.__enable__), ctypes.c_double(1.0))
-        state.on = True
-        state.off = False
+        if dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(data.__channel__), ctypes.c_int(data.__nodes__.__enable__), ctypes.c_double(1.0)) == 0:
+            check_error()
     return
 
 """-----------------------------------------------------------------------"""
@@ -110,27 +103,33 @@ def measure(device_data, mode, range=0, high_impedance=False):
         # set input impedance
         if data.__nodes__.__input__ >= 0:
             if high_impedance:
-                dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(data.__channel__), ctypes.c_int(data.__nodes__.__input__), ctypes.c_double(1))
+                if dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(data.__channel__), ctypes.c_int(data.__nodes__.__input__), ctypes.c_double(1)) == 0:
+                    check_error()
             else:
-                dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(data.__channel__), ctypes.c_int(data.__nodes__.__input__), ctypes.c_double(0))
+                if dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(data.__channel__), ctypes.c_int(data.__nodes__.__input__), ctypes.c_double(0)) == 0:
+                    check_error()
 
         # set mode
         if data.__nodes__.__mode__ >= 0:
-            dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(data.__channel__), ctypes.c_int(data.__nodes__.__mode__), mode)
+            if dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(data.__channel__), ctypes.c_int(data.__nodes__.__mode__), mode) == 0:
+                check_error()
 
         # set range
         if data.__nodes__.__range__ >= 0:
-            dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(data.__channel__), ctypes.c_int(data.__nodes__.__range__), range)
+            if dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(data.__channel__), ctypes.c_int(data.__nodes__.__range__), range) == 0:
+                check_error()
 
         # fetch analog IO status
         if dwf.FDwfAnalogIOStatus(device_data.handle) == 0:
             # signal error
+            check_error()
             return None
         
         # get reading
         if data.__nodes__.__meas__ >= 0:
             measurement = ctypes.c_double()
-            dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(data.__channel__), ctypes.c_int(data.__nodes__.__meas__), ctypes.byref(measurement))
+            if dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(data.__channel__), ctypes.c_int(data.__nodes__.__meas__), ctypes.byref(measurement)) == 0:
+                check_error()
             return measurement.value
     return None
 
@@ -142,9 +141,9 @@ def close(device_data):
     """
     # disable the DMM
     if data.__channel__ >= 0 and data.__nodes__.__enable__ >= 0:
-        dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(data.__channel__), ctypes.c_int(data.__nodes__.__enable__), ctypes.c_double(0))
-        state.on = False
-        state.off = True
+        if dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(data.__channel__), ctypes.c_int(data.__nodes__.__enable__), ctypes.c_double(0)) == 0:
+            check_error()
     # reset the instrument
-    dwf.FDwfAnalogIOReset(device_data.handle)
+    if dwf.FDwfAnalogIOReset(device_data.handle) == 0:
+        check_error()
     return

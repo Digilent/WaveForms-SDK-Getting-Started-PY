@@ -22,6 +22,7 @@ else:
 # import constants
 path.append(constants_path)
 import dwfconstants as constants
+from WF_SDK.device import check_error
 
 """-----------------------------------------------------------------------"""
 
@@ -30,12 +31,6 @@ class data:
     sampling_frequency = 20e06
     buffer_size = 8192
     max_buffer_size = 0
-
-class state:
-    """ stores the state of the instrument """
-    on = False
-    off = False
-    trigger = False
 
 """-----------------------------------------------------------------------"""
 
@@ -63,28 +58,31 @@ def open(device_data, sampling_frequency=20e06, buffer_size=0, offset=0, amplitu
     data.max_buffer_size = device_data.analog.input.max_buffer_size
 
     # enable all channels
-    dwf.FDwfAnalogInChannelEnableSet(device_data.handle, ctypes.c_int(-1), ctypes.c_bool(True))
+    if dwf.FDwfAnalogInChannelEnableSet(device_data.handle, ctypes.c_int(-1), ctypes.c_bool(True)) == 0:
+        check_error()
     
     # set offset voltage (in Volts)
-    dwf.FDwfAnalogInChannelOffsetSet(device_data.handle, ctypes.c_int(-1), ctypes.c_double(offset))
+    if dwf.FDwfAnalogInChannelOffsetSet(device_data.handle, ctypes.c_int(-1), ctypes.c_double(offset)) == 0:
+        check_error()
     
     # set range (maximum signal amplitude in Volts)
-    dwf.FDwfAnalogInChannelRangeSet(device_data.handle, ctypes.c_int(-1), ctypes.c_double(amplitude_range))
+    if dwf.FDwfAnalogInChannelRangeSet(device_data.handle, ctypes.c_int(-1), ctypes.c_double(amplitude_range)) == 0:
+        check_error()
     
     # set the buffer size (data point in a recording)
     if buffer_size == 0:
         buffer_size = data.max_buffer_size
     data.buffer_size = buffer_size
-    dwf.FDwfAnalogInBufferSizeSet(device_data.handle, ctypes.c_int(buffer_size))
+    if dwf.FDwfAnalogInBufferSizeSet(device_data.handle, ctypes.c_int(buffer_size)) == 0:
+        check_error()
     
     # set the acquisition frequency (in Hz)
-    dwf.FDwfAnalogInFrequencySet(device_data.handle, ctypes.c_double(sampling_frequency))
+    if dwf.FDwfAnalogInFrequencySet(device_data.handle, ctypes.c_double(sampling_frequency)) == 0:
+        check_error()
     
     # disable averaging (for more info check the documentation)
-    dwf.FDwfAnalogInChannelFilterSet(device_data.handle, ctypes.c_int(-1), constants.filterDecimate)
-    
-    state.on = True
-    state.off = False
+    if dwf.FDwfAnalogInChannelFilterSet(device_data.handle, ctypes.c_int(-1), constants.filterDecimate) == 0:
+        check_error()
     return
 
 """-----------------------------------------------------------------------"""
@@ -99,14 +97,17 @@ def measure(device_data, channel):
         returns:    - the measured voltage in Volts
     """
     # set up the instrument
-    dwf.FDwfAnalogInConfigure(device_data.handle, ctypes.c_bool(False), ctypes.c_bool(False))
+    if dwf.FDwfAnalogInConfigure(device_data.handle, ctypes.c_bool(False), ctypes.c_bool(False)) == 0:
+        check_error()
     
     # read data to an internal buffer
-    dwf.FDwfAnalogInStatus(device_data.handle, ctypes.c_bool(False), ctypes.c_int(0))
+    if dwf.FDwfAnalogInStatus(device_data.handle, ctypes.c_bool(False), ctypes.c_int(0)) == 0:
+        check_error()
     
     # extract data from that buffer
     voltage = ctypes.c_double()   # variable to store the measured voltage
-    dwf.FDwfAnalogInStatusSample(device_data.handle, ctypes.c_int(channel - 1), ctypes.byref(voltage))
+    if dwf.FDwfAnalogInStatusSample(device_data.handle, ctypes.c_int(channel - 1), ctypes.byref(voltage)) == 0:
+        check_error()
     
     # store the result as float
     voltage = voltage.value
@@ -128,34 +129,40 @@ def trigger(device_data, enable, source=trigger_source.none, channel=1, timeout=
     """
     if enable and source != constants.trigsrcNone:
         # enable/disable auto triggering
-        dwf.FDwfAnalogInTriggerAutoTimeoutSet(device_data.handle, ctypes.c_double(timeout))
+        if dwf.FDwfAnalogInTriggerAutoTimeoutSet(device_data.handle, ctypes.c_double(timeout)) == 0:
+            check_error()
 
         # set trigger source
-        dwf.FDwfAnalogInTriggerSourceSet(device_data.handle, source)
+        if dwf.FDwfAnalogInTriggerSourceSet(device_data.handle, source) == 0:
+            check_error()
 
         # set trigger channel
         if source == constants.trigsrcDetectorAnalogIn:
             channel -= 1    # decrement analog channel index
-        dwf.FDwfAnalogInTriggerChannelSet(device_data.handle, ctypes.c_int(channel))
+        if dwf.FDwfAnalogInTriggerChannelSet(device_data.handle, ctypes.c_int(channel)) == 0:
+            check_error()
 
         # set trigger type
-        dwf.FDwfAnalogInTriggerTypeSet(device_data.handle, constants.trigtypeEdge)
+        if dwf.FDwfAnalogInTriggerTypeSet(device_data.handle, constants.trigtypeEdge) == 0:
+            check_error()
 
         # set trigger level
-        dwf.FDwfAnalogInTriggerLevelSet(device_data.handle, ctypes.c_double(level))
+        if dwf.FDwfAnalogInTriggerLevelSet(device_data.handle, ctypes.c_double(level)) == 0:
+            check_error()
 
         # set trigger edge
         if edge_rising:
             # rising edge
-            dwf.FDwfAnalogInTriggerConditionSet(device_data.handle, constants.trigcondRisingPositive)
+            if dwf.FDwfAnalogInTriggerConditionSet(device_data.handle, constants.trigcondRisingPositive) == 0:
+                check_error()
         else:
             # falling edge
-            dwf.FDwfAnalogInTriggerConditionSet(device_data.handle, constants.trigcondFallingNegative)
-        state.trigger = True
+            if dwf.FDwfAnalogInTriggerConditionSet(device_data.handle, constants.trigcondFallingNegative) == 0:
+                check_error()
     else:
         # turn off the trigger
-        dwf.FDwfAnalogInTriggerSourceSet(device_data.handle, constants.trigsrcNone)
-        state.trigger = False
+        if dwf.FDwfAnalogInTriggerSourceSet(device_data.handle, constants.trigsrcNone) == 0:
+            check_error()
     return
 
 """-----------------------------------------------------------------------"""
@@ -170,12 +177,14 @@ def record(device_data, channel):
         returns:    - a list with the recorded voltages
     """
     # set up the instrument
-    dwf.FDwfAnalogInConfigure(device_data.handle, ctypes.c_bool(False), ctypes.c_bool(True))
+    if dwf.FDwfAnalogInConfigure(device_data.handle, ctypes.c_bool(False), ctypes.c_bool(True)) == 0:
+        check_error()
     
     # read data to an internal buffer
     while True:
         status = ctypes.c_byte()    # variable to store buffer status
-        dwf.FDwfAnalogInStatus(device_data.handle, ctypes.c_bool(True), ctypes.byref(status))
+        if dwf.FDwfAnalogInStatus(device_data.handle, ctypes.c_bool(True), ctypes.byref(status)) == 0:
+            check_error()
     
         # check internal buffer status
         if status.value == constants.DwfStateDone.value:
@@ -184,7 +193,8 @@ def record(device_data, channel):
     
     # copy buffer
     buffer = (ctypes.c_double * data.buffer_size)()   # create an empty buffer
-    dwf.FDwfAnalogInStatusData(device_data.handle, ctypes.c_int(channel - 1), buffer, ctypes.c_int(data.buffer_size))
+    if dwf.FDwfAnalogInStatusData(device_data.handle, ctypes.c_int(channel - 1), buffer, ctypes.c_int(data.buffer_size)) == 0:
+        check_error()
     
     # convert into list
     buffer = [float(element) for element in buffer]
@@ -196,8 +206,6 @@ def close(device_data):
     """
         reset the scope
     """
-    dwf.FDwfAnalogInReset(device_data.handle)
-    state.on = False
-    state.off = True
-    state.trigger = False
+    if dwf.FDwfAnalogInReset(device_data.handle) == 0:
+        check_error()
     return

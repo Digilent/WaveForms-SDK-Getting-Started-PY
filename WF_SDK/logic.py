@@ -22,6 +22,7 @@ else:
 # import constants
 path.append(constants_path)
 import dwfconstants as constants
+from WF_SDK.device import check_error
 
 """-----------------------------------------------------------------------"""
 
@@ -30,12 +31,6 @@ class data:
     sampling_frequency = 100e06
     buffer_size = 4096
     max_buffer_size = 0
-
-class state:
-    """ stores the state of the instrument """
-    on = False
-    off = True
-    trigger = False
 
 """-----------------------------------------------------------------------"""
 
@@ -53,22 +48,23 @@ def open(device_data, sampling_frequency=100e06, buffer_size=0):
 
     # get internal clock frequency
     internal_frequency = ctypes.c_double()
-    dwf.FDwfDigitalInInternalClockInfo(device_data.handle, ctypes.byref(internal_frequency))
+    if dwf.FDwfDigitalInInternalClockInfo(device_data.handle, ctypes.byref(internal_frequency)) == 0:
+        check_error()
     
     # set clock frequency divider (needed for lower frequency input signals)
-    dwf.FDwfDigitalInDividerSet(device_data.handle, ctypes.c_int(int(internal_frequency.value / sampling_frequency)))
+    if dwf.FDwfDigitalInDividerSet(device_data.handle, ctypes.c_int(int(internal_frequency.value / sampling_frequency))) == 0:
+        check_error()
     
     # set 16-bit sample format
-    dwf.FDwfDigitalInSampleFormatSet(device_data.handle, ctypes.c_int(16))
+    if dwf.FDwfDigitalInSampleFormatSet(device_data.handle, ctypes.c_int(16)) == 0:
+        check_error()
     
     # set buffer size
     if buffer_size == 0:
         buffer_size = data.max_buffer_size
     data.buffer_size = buffer_size
-    dwf.FDwfDigitalInBufferSizeSet(device_data.handle, ctypes.c_int(buffer_size))
-    
-    state.on = True
-    state.off = False
+    if dwf.FDwfDigitalInBufferSizeSet(device_data.handle, ctypes.c_int(buffer_size)) == 0:
+        check_error()
     return
 
 """-----------------------------------------------------------------------"""
@@ -90,34 +86,44 @@ def trigger(device_data, enable, channel, position=0, timeout=0, rising_edge=Tru
     """
     # set trigger source to digital I/O lines, or turn it off
     if enable:
-        dwf.FDwfDigitalInTriggerSourceSet(device_data.handle, constants.trigsrcDetectorDigitalIn)
-        state.trigger = True
+        if dwf.FDwfDigitalInTriggerSourceSet(device_data.handle, constants.trigsrcDetectorDigitalIn) == 0:
+            check_error()
     else:
-        dwf.FDwfDigitalInTriggerSourceSet(device_data.handle, constants.trigsrcNone)
-        state.trigger = False
+        if dwf.FDwfDigitalInTriggerSourceSet(device_data.handle, constants.trigsrcNone) == 0:
+            check_error()
+        return
     
     # set starting position and prefill
     position = min(data.buffer_size, max(0, position))
-    dwf.FDwfDigitalInTriggerPositionSet(device_data.handle, ctypes.c_int(data.buffer_size - position))
-    dwf.FDwfDigitalInTriggerPrefillSet(device_data.handle, ctypes.c_int(position))
+    if dwf.FDwfDigitalInTriggerPositionSet(device_data.handle, ctypes.c_int(data.buffer_size - position)) == 0:
+        check_error()
+    if dwf.FDwfDigitalInTriggerPrefillSet(device_data.handle, ctypes.c_int(position)) == 0:
+        check_error()
 
     # set trigger condition
     channel = ctypes.c_int(1 << channel)
     if not rising_edge:
-        dwf.FDwfDigitalInTriggerSet(device_data.handle, channel, ctypes.c_int(0), ctypes.c_int(0), ctypes.c_int(0))
-        dwf.FDwfDigitalInTriggerResetSet(device_data.handle, ctypes.c_int(0), ctypes.c_int(0), ctypes.c_int(0), channel)
+        if dwf.FDwfDigitalInTriggerSet(device_data.handle, channel, ctypes.c_int(0), ctypes.c_int(0), ctypes.c_int(0)) == 0:
+            check_error()
+        if dwf.FDwfDigitalInTriggerResetSet(device_data.handle, ctypes.c_int(0), ctypes.c_int(0), ctypes.c_int(0), channel) == 0:
+            check_error()
     else:
-        dwf.FDwfDigitalInTriggerSet(device_data.handle, ctypes.c_int(0), channel, ctypes.c_int(0), ctypes.c_int(0))
-        dwf.FDwfDigitalInTriggerResetSet(device_data.handle, ctypes.c_int(0), ctypes.c_int(0), channel, ctypes.c_int(0))
+        if dwf.FDwfDigitalInTriggerSet(device_data.handle, ctypes.c_int(0), channel, ctypes.c_int(0), ctypes.c_int(0)) == 0:
+            check_error()
+        if dwf.FDwfDigitalInTriggerResetSet(device_data.handle, ctypes.c_int(0), ctypes.c_int(0), channel, ctypes.c_int(0)) == 0:
+            check_error()
     
     # set auto triggering
-    dwf.FDwfDigitalInTriggerAutoTimeoutSet(device_data.handle, ctypes.c_double(timeout))
+    if dwf.FDwfDigitalInTriggerAutoTimeoutSet(device_data.handle, ctypes.c_double(timeout)) == 0:
+        check_error()
     
     # set sequence length to activate trigger
-    dwf.FDwfDigitalInTriggerLengthSet(device_data.handle, ctypes.c_double(length_min), ctypes.c_double(length_max), ctypes.c_int(0))
+    if dwf.FDwfDigitalInTriggerLengthSet(device_data.handle, ctypes.c_double(length_min), ctypes.c_double(length_max), ctypes.c_int(0)) == 0:
+        check_error()
 
     # set event counter
-    dwf.FDwfDigitalInTriggerCountSet(device_data.handle, ctypes.c_int(count), ctypes.c_int(0))
+    if dwf.FDwfDigitalInTriggerCountSet(device_data.handle, ctypes.c_int(count), ctypes.c_int(0)) == 0:
+        check_error()
     return
 
 """-----------------------------------------------------------------------"""
@@ -132,12 +138,14 @@ def record(device_data, channel):
         returns:    - a list with the recorded logic values
     """
     # set up the instrument
-    dwf.FDwfDigitalInConfigure(device_data.handle, ctypes.c_bool(False), ctypes.c_bool(True))
+    if dwf.FDwfDigitalInConfigure(device_data.handle, ctypes.c_bool(False), ctypes.c_bool(True)) == 0:
+        check_error()
     
     # read data to an internal buffer
     while True:
         status = ctypes.c_byte()    # variable to store buffer status
-        dwf.FDwfDigitalInStatus(device_data.handle, ctypes.c_bool(True), ctypes.byref(status))
+        if dwf.FDwfDigitalInStatus(device_data.handle, ctypes.c_bool(True), ctypes.byref(status)) == 0:
+            check_error()
     
         if status.value == constants.stsDone.value:
             # exit loop when finished
@@ -145,7 +153,8 @@ def record(device_data, channel):
     
     # get samples
     buffer = (ctypes.c_uint16 * data.buffer_size)()
-    dwf.FDwfDigitalInStatusData(device_data.handle, buffer, ctypes.c_int(2 * data.buffer_size))
+    if dwf.FDwfDigitalInStatusData(device_data.handle, buffer, ctypes.c_int(2 * data.buffer_size)) == 0:
+        check_error()
     
     # convert buffer to list of lists of integers
     result = []
@@ -160,8 +169,6 @@ def close(device_data):
     """
         reset the instrument
     """
-    dwf.FDwfDigitalInReset(device_data.handle)
-    state.on = False
-    state.off = True
-    state.trigger = False
+    if dwf.FDwfDigitalInReset(device_data.handle) == 0:
+        check_error()
     return

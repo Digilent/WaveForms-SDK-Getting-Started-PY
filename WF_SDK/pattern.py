@@ -22,14 +22,7 @@ else:
 # import constants
 path.append(constants_path)
 import dwfconstants as constants
-
-"""-----------------------------------------------------------------------"""
-
-class state:
-    """ stores the state of the instrument """
-    on = False
-    off = True
-    channel = [False for _ in range(16)]
+from WF_SDK.device import check_error
 
 """-----------------------------------------------------------------------"""
 
@@ -78,13 +71,16 @@ def generate(device_data, channel, function, frequency, duty_cycle=50, data=[], 
     """
     if device_data.name == "Digital Discovery":
         channel = channel - 24
+        
     # get internal clock frequency
     internal_frequency = ctypes.c_double()
-    dwf.FDwfDigitalOutInternalClockInfo(device_data.handle, ctypes.byref(internal_frequency))
+    if dwf.FDwfDigitalOutInternalClockInfo(device_data.handle, ctypes.byref(internal_frequency)) == 0:
+        check_error()
     
     # get counter value range
     counter_limit = ctypes.c_uint()
-    dwf.FDwfDigitalOutCounterInfo(device_data.handle, ctypes.c_int(channel), ctypes.c_int(0), ctypes.byref(counter_limit))
+    if dwf.FDwfDigitalOutCounterInfo(device_data.handle, ctypes.c_int(channel), ctypes.c_int(0), ctypes.byref(counter_limit)) == 0:
+        check_error()
     
     # calculate the divider for the given signal frequency
     if function == constants.DwfDigitalOutTypePulse:
@@ -93,16 +89,20 @@ def generate(device_data, channel, function, frequency, duty_cycle=50, data=[], 
         divider = int(internal_frequency.value / frequency)
     
     # enable the respective channel
-    dwf.FDwfDigitalOutEnableSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(1))
+    if dwf.FDwfDigitalOutEnableSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(1)) == 0:
+        check_error()
     
     # set output type
-    dwf.FDwfDigitalOutTypeSet(device_data.handle, ctypes.c_int(channel), function)
+    if dwf.FDwfDigitalOutTypeSet(device_data.handle, ctypes.c_int(channel), function) == 0:
+        check_error()
     
     # set frequency
-    dwf.FDwfDigitalOutDividerSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(divider))
+    if dwf.FDwfDigitalOutDividerSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(divider)) == 0:
+        check_error()
 
     # set idle state
-    dwf.FDwfDigitalOutIdleSet(device_data.handle, ctypes.c_int(channel), idle)
+    if dwf.FDwfDigitalOutIdleSet(device_data.handle, ctypes.c_int(channel), idle) == 0:
+        check_error()
 
     # set PWM signal duty cycle
     if function == constants.DwfDigitalOutTypePulse:
@@ -111,7 +111,8 @@ def generate(device_data, channel, function, frequency, duty_cycle=50, data=[], 
         # calculate steps for low and high parts of the period
         high_steps = int(steps * duty_cycle / 100)
         low_steps = int(steps - high_steps)
-        dwf.FDwfDigitalOutCounterSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(low_steps), ctypes.c_int(high_steps))
+        if dwf.FDwfDigitalOutCounterSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(low_steps), ctypes.c_int(high_steps)) == 0:
+            check_error()
     
     # load custom signal data
     elif function == constants.DwfDigitalOutTypeCustom:
@@ -122,44 +123,51 @@ def generate(device_data, channel, function, frequency, duty_cycle=50, data=[], 
                 buffer[index >> 3] |= 1 << (index & 7)
     
         # load data
-        dwf.FDwfDigitalOutDataSet(device_data.handle, ctypes.c_int(channel), ctypes.byref(buffer), ctypes.c_int(len(data)))
+        if dwf.FDwfDigitalOutDataSet(device_data.handle, ctypes.c_int(channel), ctypes.byref(buffer), ctypes.c_int(len(data))) == 0:
+            check_error()
     
     # calculate run length
     if run_time == "auto":
         run_time = len(data) / frequency
     
     # set wait time
-    dwf.FDwfDigitalOutWaitSet(device_data.handle, ctypes.c_double(wait))
+    if dwf.FDwfDigitalOutWaitSet(device_data.handle, ctypes.c_double(wait)) == 0:
+        check_error()
     
     # set repeat count
-    dwf.FDwfDigitalOutRepeatSet(device_data.handle, ctypes.c_int(repeat))
+    if dwf.FDwfDigitalOutRepeatSet(device_data.handle, ctypes.c_int(repeat)) == 0:
+        check_error()
     
     # set run length
-    dwf.FDwfDigitalOutRunSet(device_data.handle, ctypes.c_double(run_time))
+    if dwf.FDwfDigitalOutRunSet(device_data.handle, ctypes.c_double(run_time)) == 0:
+        check_error()
 
     # enable triggering
-    dwf.FDwfDigitalOutRepeatTriggerSet(device_data.handle, ctypes.c_int(trigger_enabled))
+    if dwf.FDwfDigitalOutRepeatTriggerSet(device_data.handle, ctypes.c_int(trigger_enabled)) == 0:
+        check_error()
     
     if trigger_enabled:
         # set trigger source
-        dwf.FDwfDigitalOutTriggerSourceSet(device_data.handle, trigger_source)
+        if dwf.FDwfDigitalOutTriggerSourceSet(device_data.handle, trigger_source) == 0:
+            check_error()
     
         # set trigger slope
         if trigger_edge_rising == True:
             # rising edge
-            dwf.FDwfDigitalOutTriggerSlopeSet(device_data.handle, constants.DwfTriggerSlopeRise)
+            if dwf.FDwfDigitalOutTriggerSlopeSet(device_data.handle, constants.DwfTriggerSlopeRise) == 0:
+                check_error()
         elif trigger_edge_rising == False:
             # falling edge
-            dwf.FDwfDigitalOutTriggerSlopeSet(device_data.handle, constants.DwfTriggerSlopeFall)
+            if dwf.FDwfDigitalOutTriggerSlopeSet(device_data.handle, constants.DwfTriggerSlopeFall) == 0:
+                check_error()
         elif trigger_edge_rising == None:
             # either edge
-            dwf.FDwfDigitalOutTriggerSlopeSet(device_data.handle, constants.DwfTriggerSlopeEither)
+            if dwf.FDwfDigitalOutTriggerSlopeSet(device_data.handle, constants.DwfTriggerSlopeEither) == 0:
+                check_error()
 
     # start generating the signal
-    dwf.FDwfDigitalOutConfigure(device_data.handle, ctypes.c_int(True))
-    state.on = True
-    state.off = False
-    state.channel[channel] = True
+    if dwf.FDwfDigitalOutConfigure(device_data.handle, ctypes.c_int(True)) == 0:
+        check_error()
     return
 
 """-----------------------------------------------------------------------"""
@@ -168,10 +176,8 @@ def close(device_data):
     """
         reset the instrument
     """
-    dwf.FDwfDigitalOutReset(device_data.handle)
-    state.on = False
-    state.off = True
-    state.channel = [False for _ in range(16)]
+    if dwf.FDwfDigitalOutReset(device_data.handle) == 0:
+        check_error()
     return
 
 """-----------------------------------------------------------------------"""
@@ -180,11 +186,10 @@ def enable(device_data, channel):
     """ enables a digital output channel """
     if device_data.name == "Digital Discovery":
         channel = channel - 24
-    dwf.FDwfDigitalOutEnableSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(1))
-    dwf.FDwfDigitalOutConfigure(device_data.handle, ctypes.c_int(True))
-    state.on = True
-    state.off = False
-    state.channel[channel] = True
+    if dwf.FDwfDigitalOutEnableSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(1)) == 0:
+        check_error()
+    if dwf.FDwfDigitalOutConfigure(device_data.handle, ctypes.c_int(True)) == 0:
+        check_error()
     return
 
 """-----------------------------------------------------------------------"""
@@ -193,7 +198,8 @@ def disable(device_data, channel):
     """ disables a digital output channel """
     if device_data.name == "Digital Discovery":
         channel = channel - 24
-    dwf.FDwfDigitalOutEnableSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(0))
-    dwf.FDwfDigitalOutConfigure(device_data.handle, ctypes.c_int(True))
-    state.channel[channel] = False
+    if dwf.FDwfDigitalOutEnableSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(0)) == 0:
+        check_error()
+    if dwf.FDwfDigitalOutConfigure(device_data.handle, ctypes.c_int(True)) == 0:
+        check_error()
     return

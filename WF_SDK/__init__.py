@@ -13,3 +13,5 @@ from WF_SDK import static
 from WF_SDK import protocol
 
 from WF_SDK import tools
+
+from WF_SDK.device import error, warning

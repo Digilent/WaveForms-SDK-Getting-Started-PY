@@ -22,14 +22,7 @@ else:
 # import constants
 path.append(constants_path)
 import dwfconstants as constants
-
-"""-----------------------------------------------------------------------"""
-
-class state:
-    """ stores the state of the instrument """
-    on = False
-    off = True
-    channel = [False, False]
+from WF_SDK.device import check_error
 
 """-----------------------------------------------------------------------"""
 
@@ -67,10 +60,12 @@ def generate(device_data, channel, function, offset, frequency=1e03, amplitude=1
     """
     # enable channel
     channel = ctypes.c_int(channel - 1)
-    dwf.FDwfAnalogOutNodeEnableSet(device_data.handle, channel, constants.AnalogOutNodeCarrier, ctypes.c_bool(True))
+    if dwf.FDwfAnalogOutNodeEnableSet(device_data.handle, channel, constants.AnalogOutNodeCarrier, ctypes.c_bool(True)) == 0:
+        check_error()
     
     # set function type
-    dwf.FDwfAnalogOutNodeFunctionSet(device_data.handle, channel, constants.AnalogOutNodeCarrier, function)
+    if dwf.FDwfAnalogOutNodeFunctionSet(device_data.handle, channel, constants.AnalogOutNodeCarrier, function) == 0:
+        check_error()
     
     # load data if the function type is custom
     if function == constants.funcCustom:
@@ -78,34 +73,40 @@ def generate(device_data, channel, function, offset, frequency=1e03, amplitude=1
         buffer = (ctypes.c_double * data_length)()
         for index in range(0, len(buffer)):
             buffer[index] = ctypes.c_double(data[index])
-        dwf.FDwfAnalogOutNodeDataSet(device_data.handle, channel, constants.AnalogOutNodeCarrier, buffer, ctypes.c_int(data_length))
+        if dwf.FDwfAnalogOutNodeDataSet(device_data.handle, channel, constants.AnalogOutNodeCarrier, buffer, ctypes.c_int(data_length)) == 0:
+            check_error()
     
     # set frequency
-    dwf.FDwfAnalogOutNodeFrequencySet(device_data.handle, channel, constants.AnalogOutNodeCarrier, ctypes.c_double(frequency))
+    if dwf.FDwfAnalogOutNodeFrequencySet(device_data.handle, channel, constants.AnalogOutNodeCarrier, ctypes.c_double(frequency)) == 0:
+        check_error()
     
     # set amplitude or DC voltage
-    dwf.FDwfAnalogOutNodeAmplitudeSet(device_data.handle, channel, constants.AnalogOutNodeCarrier, ctypes.c_double(amplitude))
+    if dwf.FDwfAnalogOutNodeAmplitudeSet(device_data.handle, channel, constants.AnalogOutNodeCarrier, ctypes.c_double(amplitude)) == 0:
+        check_error()
     
     # set offset
-    dwf.FDwfAnalogOutNodeOffsetSet(device_data.handle, channel, constants.AnalogOutNodeCarrier, ctypes.c_double(offset))
+    if dwf.FDwfAnalogOutNodeOffsetSet(device_data.handle, channel, constants.AnalogOutNodeCarrier, ctypes.c_double(offset)) == 0:
+        check_error()
     
     # set symmetry
-    dwf.FDwfAnalogOutNodeSymmetrySet(device_data.handle, channel, constants.AnalogOutNodeCarrier, ctypes.c_double(symmetry))
+    if dwf.FDwfAnalogOutNodeSymmetrySet(device_data.handle, channel, constants.AnalogOutNodeCarrier, ctypes.c_double(symmetry)) == 0:
+        check_error()
     
     # set running time limit
-    dwf.FDwfAnalogOutRunSet(device_data.handle, channel, ctypes.c_double(run_time))
+    if dwf.FDwfAnalogOutRunSet(device_data.handle, channel, ctypes.c_double(run_time)) == 0:
+        check_error()
     
     # set wait time before start
-    dwf.FDwfAnalogOutWaitSet(device_data.handle, channel, ctypes.c_double(wait))
+    if dwf.FDwfAnalogOutWaitSet(device_data.handle, channel, ctypes.c_double(wait)) == 0:
+        check_error()
     
     # set number of repeating cycles
-    dwf.FDwfAnalogOutRepeatSet(device_data.handle, channel, ctypes.c_int(repeat))
+    if dwf.FDwfAnalogOutRepeatSet(device_data.handle, channel, ctypes.c_int(repeat)) == 0:
+        check_error()
     
     # start
-    dwf.FDwfAnalogOutConfigure(device_data.handle, channel, ctypes.c_bool(True))
-    state.on = True
-    state.off = False
-    state.channel[channel.value] = True
+    if dwf.FDwfAnalogOutConfigure(device_data.handle, channel, ctypes.c_bool(True)) == 0:
+        check_error()
     return
 
 """-----------------------------------------------------------------------"""
@@ -115,13 +116,8 @@ def close(device_data, channel=0):
         reset a wavegen channel, or all channels (channel=0)
     """
     channel = ctypes.c_int(channel - 1)
-    dwf.FDwfAnalogOutReset(device_data.handle, channel)
-    state.on = False
-    state.off = False
-    if channel.value >= 0:
-        state.channel[channel.value] = False
-    else:
-        state.channel = [False, False]
+    if dwf.FDwfAnalogOutReset(device_data.handle, channel) == 0:
+        check_error()
     return
 
 """-----------------------------------------------------------------------"""
@@ -129,10 +125,8 @@ def close(device_data, channel=0):
 def enable(device_data, channel):
     """ enables an analog output channel """
     channel = ctypes.c_int(channel - 1)
-    dwf.FDwfAnalogOutConfigure(device_data.handle, channel, ctypes.c_bool(True))
-    state.on = True
-    state.off = False
-    state.channel[channel.value] = True
+    if dwf.FDwfAnalogOutConfigure(device_data.handle, channel, ctypes.c_bool(True)) == 0:
+        check_error()
     return
 
 """-----------------------------------------------------------------------"""
@@ -140,6 +134,6 @@ def enable(device_data, channel):
 def disable(device_data, channel):
     """ disables an analog output channel """
     channel = ctypes.c_int(channel - 1)
-    dwf.FDwfAnalogOutConfigure(device_data.handle, channel, ctypes.c_bool(False))
-    state.channel[channel.value] = False
+    if dwf.FDwfAnalogOutConfigure(device_data.handle, channel, ctypes.c_bool(False)) == 0:
+        check_error()
     return

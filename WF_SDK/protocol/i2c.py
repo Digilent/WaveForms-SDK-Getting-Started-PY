@@ -3,6 +3,7 @@
 import ctypes                     # import the C compatible data types
 from sys import platform, path    # this is needed to check the OS type and get the PATH
 from os import sep                # OS specific file path separators
+import inspect                    # get caller information
 
 # load the dynamic library, get constants path (the path is OS specific)
 if platform.startswith("win"):
@@ -22,13 +23,17 @@ else:
 # import constants
 path.append(constants_path)
 import dwfconstants as constants
+from WF_SDK.device import check_error, warning
 
 """-----------------------------------------------------------------------"""
 
-class state:
-    """ stores the state of the instrument """
-    on = False
-    off = True
+def __check_warning__(device_data, nak):
+    """
+        check for I2C errors
+    """
+    if nak != 0:
+        raise warning("NAK: index " + str(nak), inspect.stack()[1].function, "protocol/i2c")
+    return
 
 """-----------------------------------------------------------------------"""
 
@@ -41,39 +46,41 @@ def open(device_data, sda, scl, clk_rate=100e03, stretching=True):
                     - scl (DIO line used for clock)
                     - rate (clock frequency in Hz, default is 100KHz)
                     - stretching (enables/disables clock stretching)
-
-        returns:    - error message or empty string
     """
     # reset the interface
-    dwf.FDwfDigitalI2cReset(device_data.handle)
+    if dwf.FDwfDigitalI2cReset(device_data.handle) == 0:
+        check_error()
 
     # clock stretching
     if stretching:
-        dwf.FDwfDigitalI2cStretchSet(device_data.handle, ctypes.c_int(1))
+        if dwf.FDwfDigitalI2cStretchSet(device_data.handle, ctypes.c_int(1)) == 0:
+            check_error()
     else:
-        dwf.FDwfDigitalI2cStretchSet(device_data.handle, ctypes.c_int(0))
+        if dwf.FDwfDigitalI2cStretchSet(device_data.handle, ctypes.c_int(0)) == 0:
+            check_error()
 
     # set clock frequency
-    dwf.FDwfDigitalI2cRateSet(device_data.handle, ctypes.c_double(clk_rate))
+    if dwf.FDwfDigitalI2cRateSet(device_data.handle, ctypes.c_double(clk_rate)) == 0:
+        check_error()
 
     #  set communication lines
-    dwf.FDwfDigitalI2cSclSet(device_data.handle, ctypes.c_int(scl))
-    dwf.FDwfDigitalI2cSdaSet(device_data.handle, ctypes.c_int(sda))
+    if dwf.FDwfDigitalI2cSclSet(device_data.handle, ctypes.c_int(scl)) == 0:
+        check_error()
+    if dwf.FDwfDigitalI2cSdaSet(device_data.handle, ctypes.c_int(sda)) == 0:
+        check_error()
 
     # check bus
     nak = ctypes.c_int()
-    dwf.FDwfDigitalI2cClear(device_data.handle, ctypes.byref(nak))
+    if dwf.FDwfDigitalI2cClear(device_data.handle, ctypes.byref(nak)) == 0:
+        check_error()
     if nak.value == 0:
-        return "Error: I2C bus lockup"
+        raise warning("I2C bus lockup", "open", "protocol/i2c")
 
     # write 0 bytes
-    dwf.FDwfDigitalI2cWrite(device_data.handle, ctypes.c_int(0), ctypes.c_int(0), ctypes.c_int(0), ctypes.byref(nak))
-    if nak.value != 0:
-        return "NAK: index " + str(nak.value)
-    
-    state.on = True
-    state.off = False
-    return ""
+    if dwf.FDwfDigitalI2cWrite(device_data.handle, ctypes.c_int(0), ctypes.c_int(0), ctypes.c_int(0), ctypes.byref(nak)) == 0:
+        check_error()
+    __check_warning__(device_data, nak)
+    return
 
 """-----------------------------------------------------------------------"""
 
@@ -84,8 +91,6 @@ def write(device_data, data, address):
         parameters: - device data
                     - data of type string, int, or list of characters/integers
                     - address (8-bit address of the slave device)
-                    
-        returns:    - error message or empty string
     """
     # cast data
     if type(data) == int:
@@ -101,12 +106,11 @@ def write(device_data, data, address):
 
     # send
     nak = ctypes.c_int()
-    dwf.FDwfDigitalI2cWrite(device_data.handle, ctypes.c_int(address << 1), buffer, ctypes.c_int(ctypes.sizeof(buffer)), ctypes.byref(nak))
+    if dwf.FDwfDigitalI2cWrite(device_data.handle, ctypes.c_int(address << 1), buffer, ctypes.c_int(ctypes.sizeof(buffer)), ctypes.byref(nak)) == 0:
+        check_error()
 
     # check for not acknowledged
-    if nak.value != 0:
-        return "NAK: index " + str(nak.value)
-    
+    __check_warning__(device_data, nak)
     return ""
 
 """-----------------------------------------------------------------------"""
@@ -120,23 +124,21 @@ def read(device_data, count, address):
                     - address (8-bit address of the slave device)
         
         return:     - integer list containing the received bytes
-                    - error message or empty string
     """
     # create buffer to store data
     buffer = (ctypes.c_ubyte * count)()
 
     # receive
     nak = ctypes.c_int()
-    dwf.FDwfDigitalI2cRead(device_data.handle, ctypes.c_int(address << 1), buffer, ctypes.c_int(count), ctypes.byref(nak))
+    if dwf.FDwfDigitalI2cRead(device_data.handle, ctypes.c_int(address << 1), buffer, ctypes.c_int(count), ctypes.byref(nak)) == 0:
+        check_error()
 
     # decode data
     data = [int(element) for element in buffer]
 
     # check for not acknowledged
-    if nak.value != 0:
-        return data, "NAK: index " + str(nak.value)
-    
-    return data, ""
+    __check_warning__(device_data, nak)
+    return data
 
 """-----------------------------------------------------------------------"""
 
@@ -150,7 +152,6 @@ def exchange(device_data, data, count, address):
                     - address (8-bit address of the slave device)
         
         return:     - integer list containing the received bytes
-                    - error message or empty string
     """
     # create buffer to store data
     buffer = (ctypes.c_ubyte * count)()
@@ -169,20 +170,20 @@ def exchange(device_data, data, count, address):
 
     # send and receive
     nak = ctypes.c_int()
-    dwf.FDwfDigitalI2cWriteRead(device_data.handle, ctypes.c_int(address << 1), tx_buffer, ctypes.c_int(ctypes.sizeof(tx_buffer)), buffer, ctypes.c_int(count), ctypes.byref(nak))
+    if dwf.FDwfDigitalI2cWriteRead(device_data.handle, ctypes.c_int(address << 1), tx_buffer, ctypes.c_int(ctypes.sizeof(tx_buffer)), buffer, ctypes.c_int(count), ctypes.byref(nak)) == 0:
+        check_error()
 
     # decode data
     rec_data = [int(element) for element in buffer]
 
     # check for not acknowledged
-    if nak.value != 0:
-        return rec_data, "NAK: index " + str(nak.value)
-    
-    return rec_data, ""
+    __check_warning__(device_data, nak)
+    return rec_data
 
 """-----------------------------------------------------------------------"""
 
 def spy(device_data, count = 16):
+    pass
     """
         receives data from I2C
         
@@ -192,7 +193,7 @@ def spy(device_data, count = 16):
         return:     - class containing the received data: start, address, direction, message, stop
                     - error message or empty string
     """
-    # variable to store the errors
+    """# variable to store the errors
     error = ""
 
     # variable to store the data
@@ -204,7 +205,7 @@ def spy(device_data, count = 16):
         stop = ""
 
     # start the interfcae
-    dwf.FDwfDigitalI2cSpyStart(device_data.handle)
+    if dwf.FDwfDigitalI2cSpyStart(device_data.handle)
 
     # read data
     start = ctypes.c_int()
@@ -212,7 +213,7 @@ def spy(device_data, count = 16):
     data = (ctypes.c_ubyte * count)()
     count = ctypes.c_int(count)
     nak = ctypes.c_int()
-    if dwf.FDwfDigitalI2cSpyStatus(device_data.handle, ctypes.byref(start), ctypes.byref(stop), ctypes.byref(data), ctypes.byref(count), ctypes.byref(nak)) == 0:
+    if if dwf.FDwfDigitalI2cSpyStatus(device_data.handle, ctypes.byref(start), ctypes.byref(stop), ctypes.byref(data), ctypes.byref(count), ctypes.byref(nak)) == 0:
         error = "Communication with the device failed."
     
     # decode data
@@ -243,7 +244,7 @@ def spy(device_data, count = 16):
     if nak.value != 0 and error == "":
         error = "NAK: index " + str(nak.value)
     
-    return message, error
+    return message, error"""
 
 """-----------------------------------------------------------------------"""
 
@@ -251,7 +252,6 @@ def close(device_data):
     """
         reset the i2c interface
     """
-    dwf.FDwfDigitalI2cReset(device_data.handle)
-    state.on = False
-    state.off = True
+    if dwf.FDwfDigitalI2cReset(device_data.handle) == 0:
+        check_error()
     return

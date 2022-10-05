@@ -22,13 +22,7 @@ else:
 # import constants
 path.append(constants_path)
 import dwfconstants as constants
-
-"""-----------------------------------------------------------------------"""
-
-class state:
-    """ stores the state of the instrument """
-    on = False
-    off = True
+from WF_SDK.device import check_error, warning
 
 """-----------------------------------------------------------------------"""
 
@@ -45,14 +39,18 @@ def open(device_data, rx, tx, baud_rate=9600, parity=None, data_bits=8, stop_bit
                     - stop_bits (default is 1)
     """
     # set baud rate
-    dwf.FDwfDigitalUartRateSet(device_data.handle, ctypes.c_double(baud_rate))
+    if dwf.FDwfDigitalUartRateSet(device_data.handle, ctypes.c_double(baud_rate)) == 0:
+        check_error()
 
     # set communication channels
-    dwf.FDwfDigitalUartTxSet(device_data.handle, ctypes.c_int(tx))
-    dwf.FDwfDigitalUartRxSet(device_data.handle, ctypes.c_int(rx))
+    if dwf.FDwfDigitalUartTxSet(device_data.handle, ctypes.c_int(tx)) == 0:
+        check_error()
+    if dwf.FDwfDigitalUartRxSet(device_data.handle, ctypes.c_int(rx)) == 0:
+        check_error()
 
     # set data bit count
-    dwf.FDwfDigitalUartBitsSet(device_data.handle, ctypes.c_int(data_bits))
+    if dwf.FDwfDigitalUartBitsSet(device_data.handle, ctypes.c_int(data_bits)) == 0:
+        check_error()
 
     # set parity bit requirements
     if parity == True:
@@ -61,10 +59,12 @@ def open(device_data, rx, tx, baud_rate=9600, parity=None, data_bits=8, stop_bit
         parity = 1
     else:
         parity = 0
-    dwf.FDwfDigitalUartParitySet(device_data.handle, ctypes.c_int(parity))
+    if dwf.FDwfDigitalUartParitySet(device_data.handle, ctypes.c_int(parity)) == 0:
+        check_error()
 
     # set stop bit count
-    dwf.FDwfDigitalUartStopSet(device_data.handle, ctypes.c_double(stop_bits))
+    if dwf.FDwfDigitalUartStopSet(device_data.handle, ctypes.c_double(stop_bits)) == 0:
+        check_error()
 
     # initialize channels with idle levels
 
@@ -72,13 +72,12 @@ def open(device_data, rx, tx, baud_rate=9600, parity=None, data_bits=8, stop_bit
     dummy_buffer = ctypes.create_string_buffer(0)
     dummy_buffer = ctypes.c_int(0)
     dummy_parity_flag = ctypes.c_int(0)
-    dwf.FDwfDigitalUartRx(device_data.handle, dummy_buffer, ctypes.c_int(0), ctypes.byref(dummy_buffer), ctypes.byref(dummy_parity_flag))
+    if dwf.FDwfDigitalUartRx(device_data.handle, dummy_buffer, ctypes.c_int(0), ctypes.byref(dummy_buffer), ctypes.byref(dummy_parity_flag)) == 0:
+        check_error()
 
     # dummy write
-    dwf.FDwfDigitalUartTx(device_data.handle, dummy_buffer, ctypes.c_int(0))
-    
-    state.on = True
-    state.off = False
+    if dwf.FDwfDigitalUartTx(device_data.handle, dummy_buffer, ctypes.c_int(0)) == 0:
+        check_error()
     return
 
 """-----------------------------------------------------------------------"""
@@ -90,10 +89,8 @@ def read(device_data):
         parameters: - device data
 
         return:     - integer list containing the received bytes
-                    - error message or empty string
     """
     # variable to store results
-    error = ""
     rx_data = []
 
     # create empty string buffer
@@ -106,7 +103,8 @@ def read(device_data):
     parity_flag= ctypes.c_int(0)
 
     # read up to 8k characters
-    dwf.FDwfDigitalUartRx(device_data.handle, data, ctypes.c_int(ctypes.sizeof(data)-1), ctypes.byref(count), ctypes.byref(parity_flag))
+    if dwf.FDwfDigitalUartRx(device_data.handle, data, ctypes.c_int(ctypes.sizeof(data)-1), ctypes.byref(count), ctypes.byref(parity_flag)) == 0:
+        check_error()
 
     # append current data chunks
     for index in range(0, count.value):
@@ -124,19 +122,18 @@ def read(device_data):
         parity_flag= ctypes.c_int(0)
 
         # read up to 8k characters
-        dwf.FDwfDigitalUartRx(device_data.handle, data, ctypes.c_int(ctypes.sizeof(data)-1), ctypes.byref(count), ctypes.byref(parity_flag))
+        if dwf.FDwfDigitalUartRx(device_data.handle, data, ctypes.c_int(ctypes.sizeof(data)-1), ctypes.byref(count), ctypes.byref(parity_flag)) == 0:
+            check_error()
         # append current data chunks
         for index in range(0, count.value):
             rx_data.append(int(data[index]))
 
         # check for not acknowledged
-        if error == "":
-            if parity_flag.value < 0:
-                error = "Buffer overflow"
-            elif parity_flag.value > 0:
-                error = "Parity error: index {}".format(parity_flag.value)
-
-    return rx_data, error
+        if parity_flag.value < 0:
+            raise warning("Buffer overflow", "read", "protocol/uart")
+        elif parity_flag.value > 0:
+            raise warning("Parity error: index {}".format(parity_flag.value), "read", "protocol/uart")
+    return rx_data
 
 """-----------------------------------------------------------------------"""
 
@@ -156,7 +153,8 @@ def write(device_data, data):
     data = ctypes.create_string_buffer(data.encode("UTF-8"))
 
     # send text, trim zero ending
-    dwf.FDwfDigitalUartTx(device_data.handle, data, ctypes.c_int(ctypes.sizeof(data)-1))
+    if dwf.FDwfDigitalUartTx(device_data.handle, data, ctypes.c_int(ctypes.sizeof(data)-1)) == 0:
+        check_error()
 
     return
 
@@ -166,7 +164,6 @@ def close(device_data):
     """
         reset the uart interface
     """
-    dwf.FDwfDigitalUartReset(device_data.handle)
-    state.on = False
-    state.off = True
+    if dwf.FDwfDigitalUartReset(device_data.handle) == 0:
+        check_error()
     return

@@ -1,4 +1,4 @@
-""" POWER SUPPLIES CONTROL FUNCTIONS: switch, close """
+""" POWER SUPPLIES CONTROL FUNCTIONS: switch, switch_fixed, switch_variable, switch_digital, close """
 
 import ctypes                     # import the C compatible data types
 from sys import platform, path    # this is needed to check the OS type and get the PATH
@@ -22,6 +22,7 @@ else:
 # import constants
 path.append(constants_path)
 import dwfconstants as constants
+from WF_SDK.device import check_error
 
 """-----------------------------------------------------------------------"""
 
@@ -38,11 +39,6 @@ class data:
     negative_current = 0    # negative supply current
     current = 0             # digital/6V supply current
 
-class state:
-    """ stores the state of the instrument """
-    on = False
-    off = True
-
 """-----------------------------------------------------------------------"""
 
 def switch(device_data, supplies_data):
@@ -56,7 +52,6 @@ def switch(device_data, supplies_data):
                         - voltage and/or positive_voltage and negative_voltage
                         - current and/or positive_current and negative_current
     """
-
     # find the positive supply
     channel = -1
     for channel_index in range(device_data.analog.IO.channel_count):
@@ -67,14 +62,15 @@ def switch(device_data, supplies_data):
         # set enable
         try:
             node = -1
-            # find the enable node
+            # find the voltage node
             for node_index in range(device_data.analog.IO.node_count[channel]):
                 if device_data.analog.IO.node_name[channel][node_index] == "Enable":
                     node = node_index
                     break
             if node != -1:
                 enable = ctypes.c_int(supplies_data.positive_state)
-                dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(node), enable)
+                if dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(node), enable) == 0:
+                    check_error()
         except:
             pass
         # set voltage
@@ -87,20 +83,22 @@ def switch(device_data, supplies_data):
                     break
             if node != -1:
                 voltage = min(max(supplies_data.positive_voltage, device_data.analog.IO.min_set_range[channel][node]), device_data.analog.IO.max_set_range[channel][node])
-                dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(node), ctypes.c_double(voltage))
+                if dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(node), ctypes.c_double(voltage)) == 0:
+                    check_error()
         except:
             pass
         # set current
         try:
             node = -1
-            # find the current node
+            # find the voltage node
             for node_index in range(device_data.analog.IO.node_count[channel]):
                 if device_data.analog.IO.node_name[channel][node_index] == "Current":
                     node = node_index
                     break
             if node != -1:
                 current = min(max(supplies_data.positive_current, device_data.analog.IO.min_set_range[channel][node]), device_data.analog.IO.max_set_range[channel][node])
-                dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(node), ctypes.c_double(current))
+                if dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(node), ctypes.c_double(current)) == 0:
+                    check_error()
         except:
             pass
     
@@ -114,14 +112,15 @@ def switch(device_data, supplies_data):
         # set enable
         try:
             node = -1
-            # find the enable node
+            # find the voltage node
             for node_index in range(device_data.analog.IO.node_count[channel]):
                 if device_data.analog.IO.node_name[channel][node_index] == "Enable":
                     node = node_index
                     break
             if node != -1:
                 enable = ctypes.c_int(supplies_data.negative_state)
-                dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(node), enable)
+                if dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(node), enable) == 0:
+                    check_error()
         except:
             pass
         # set voltage
@@ -134,20 +133,22 @@ def switch(device_data, supplies_data):
                     break
             if node != -1:
                 voltage = min(max(supplies_data.negative_voltage, device_data.analog.IO.min_set_range[channel][node]), device_data.analog.IO.max_set_range[channel][node])
-                dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(node), ctypes.c_double(voltage))
+                if dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(node), ctypes.c_double(voltage)) == 0:
+                    check_error()
         except:
             pass
         # set current
         try:
             node = -1
-            # find the current node
+            # find the voltage node
             for node_index in range(device_data.analog.IO.node_count[channel]):
                 if device_data.analog.IO.node_name[channel][node_index] == "Current":
                     node = node_index
                     break
             if node != -1:
                 current = min(max(supplies_data.negative_current, device_data.analog.IO.min_set_range[channel][node]), device_data.analog.IO.max_set_range[channel][node])
-                dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(node), ctypes.c_double(current))
+                if dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(node), ctypes.c_double(current)) == 0:
+                    check_error()
         except:
             pass
     
@@ -161,14 +162,15 @@ def switch(device_data, supplies_data):
         # set enable
         try:
             node = -1
-            # find the enable node
+            # find the voltage node
             for node_index in range(device_data.analog.IO.node_count[channel]):
                 if device_data.analog.IO.node_name[channel][node_index] == "Enable":
                     node = node_index
                     break
             if node != -1:
                 enable = ctypes.c_int(supplies_data.state)
-                dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(node), enable)
+                if dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(node), enable) == 0:
+                    check_error()
         except:
             pass
         # set voltage
@@ -181,28 +183,29 @@ def switch(device_data, supplies_data):
                     break
             if node != -1:
                 voltage = min(max(supplies_data.voltage, device_data.analog.IO.min_set_range[channel][node]), device_data.analog.IO.max_set_range[channel][node])
-                dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(node), ctypes.c_double(voltage))
+                if dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(node), ctypes.c_double(voltage)) == 0:
+                    check_error()
         except:
             pass
         # set current
         try:
             node = -1
-            # find the current node
+            # find the voltage node
             for node_index in range(device_data.analog.IO.node_count[channel]):
                 if device_data.analog.IO.node_name[channel][node_index] == "Current":
                     node = node_index
                     break
             if node != -1:
                 current = min(max(supplies_data.current, device_data.analog.IO.min_set_range[channel][node]), device_data.analog.IO.max_set_range[channel][node])
-                dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(node), ctypes.c_double(current))
+                if dwf.FDwfAnalogIOChannelNodeSet(device_data.handle, ctypes.c_int(channel), ctypes.c_int(node), ctypes.c_double(current)) == 0:
+                    check_error()
         except:
             pass
 
     # turn all supplies on/off
     try:
-        dwf.FDwfAnalogIOEnableSet(device_data.handle, ctypes.c_int(supplies_data.master_state))
-        state.on = supplies_data.master_state
-        state.off = not supplies_data.master_state
+        if dwf.FDwfAnalogIOEnableSet(device_data.handle, ctypes.c_int(supplies_data.master_state)) == 0:
+            check_error()
     except:
         pass
     return
@@ -213,7 +216,6 @@ def close(device_data):
     """
         reset the supplies
     """
-    dwf.FDwfAnalogIOReset(device_data.handle)
-    state.on = False
-    state.off = True
+    if dwf.FDwfAnalogIOReset(device_data.handle) == 0:
+        check_error()
     return
