@@ -1,19 +1,22 @@
-from WF_SDK import device       # import instruments
+from WF_SDK import device, error       # import instruments
 
 """-----------------------------------------------------------------------"""
 
-# connect to the device
-device_data = device.open()
+try:
+    # connect to the device
+    device_data = device.open()
 
-# check for connection errors
-device.check_error(device_data)
+    """-----------------------------------"""
 
-"""-----------------------------------"""
-
-# use instruments here
+    # use instruments here
 
 
-"""-----------------------------------"""
+    """-----------------------------------"""
 
-# close the connection
-device.close(device_data)
+    # close the connection
+    device.close(device_data)
+
+except error as e:
+    print(e)
+    # close the connection
+    device.close(device.data)
