@@ -39,6 +39,7 @@ class trigger_source:
     none = constants.trigsrcNone
     analog = constants.trigsrcDetectorAnalogIn
     digital = constants.trigsrcDetectorDigitalIn
+    wavegen = [None, constants.trigsrcAnalogOut1, constants.trigsrcAnalogOut2]
     external = [None, constants.trigsrcExternal1, constants.trigsrcExternal2, constants.trigsrcExternal3, constants.trigsrcExternal4]
 
 """-----------------------------------------------------------------------"""
